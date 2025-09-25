@@ -66,6 +66,7 @@ interface AuthContextType extends AuthState {
   login: (data: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
+  kakaoLogin: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -137,11 +138,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const kakaoLogin = async () => {
+    await authService.kakaoLogin();
+  };
+
   const value: AuthContextType = {
     ...state,
     login,
     register,
     logout,
+    kakaoLogin,
   };
 
   return (

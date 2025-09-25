@@ -3,6 +3,7 @@ import {BrowserRouter, Route, Routes} from "react-router-dom";
 import Layout from "../shared/components/layouts/Layout.tsx";
 import HealthReportPage from "../my-pet/pages/health-report/HealthReportPage.tsx";
 import Register from "../account/pages/Register.tsx";
+import OAuth2Redirect from "../account/pages/OAuth2Redirect.tsx";
 
 
 const Home = lazy(() => import("../landing/pages/Home.tsx"));
@@ -18,6 +19,7 @@ function AppRouter() {
                 <Routes>
                     <Route path="/login" element={<Login/>}/>
                     <Route path="/register" element={<Register/>}/>
+                    <Route path="/oauth2/redirect" element={<OAuth2Redirect/>}/>
                     <Route element={<Layout/>}>
                         <Route path="/" element={<Home/>}/>
                         <Route path="/sns" element={<PetSns/>}/>

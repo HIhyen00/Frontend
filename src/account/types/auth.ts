@@ -15,6 +15,7 @@ export interface LoginResponse {
   accountId: number;
   username: string;
   expiresInSeconds: number;
+  refreshToken?: string;
 }
 
 export interface RegisterRequest {
