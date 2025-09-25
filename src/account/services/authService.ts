@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { LoginRequest, LoginResponse, RegisterRequest } from '../types/auth';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8005/api';
 
 const authAPI = axios.create({
   baseURL: `${API_BASE_URL}/auth`,
@@ -44,5 +44,10 @@ export const authService = {
   async getCurrentUser() {
     const response = await authAPI.get('/me');
     return response.data;
+  },
+
+  async kakaoLogin(): Promise<void> {
+    const redirectUri = `${window.location.origin}/oauth2/redirect`;
+    window.location.href = `${API_BASE_URL.replace('/api', '')}/oauth2/authorization/kakao?redirect_uri=${encodeURIComponent(redirectUri)}`;
   },
 };
