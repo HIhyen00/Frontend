@@ -11,48 +11,98 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   const navigate = useNavigate();
   const { login, kakaoLogin, isLoading } = useAuth();
   const [formData, setFormData] = useState({
-    id: '',
+    username: '',
     password: '',
   });
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setError(null);
+    setSuccess(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!formData.id || !formData.password) {
+    if (!formData.username || !formData.password) {
       setError('아이디와 비밀번호를 입력해주세요.');
       return;
     }
 
     try {
       await login(formData);
-      onSuccess?.();
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error && 'response' in err &&
-        typeof err.response === 'object' && err.response !== null &&
-        'data' in err.response && typeof err.response.data === 'object' &&
-        err.response.data !== null && 'message' in err.response.data &&
-        typeof err.response.data.message === 'string'
-        ? err.response.data.message
-        : '로그인에 실패했습니다.';
+      setSuccess('로그인이 완료되었습니다!');
+      setTimeout(() => {
+        onSuccess?.();
+      }, 1000);
+    } catch (err: any) {
+
+      // 백엔드 ErrorResponse 형식에 맞춘 에러 처리
+      let errorMessage = '로그인에 실패했습니다.';
+
+      if (err?.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err?.response?.status === 401) {
+        errorMessage = '아이디 또는 비밀번호가 올바르지 않습니다.';
+      } else if (err?.response?.status >= 500) {
+        errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+      } else if (err?.message) {
+        errorMessage = err.message;
+      }
+
       setError(errorMessage);
     }
   };
 
   const handleKakaoLogin = async () => {
     try {
-      await kakaoLogin();
+      // 카카오 인증 SDK 동적 로드
+      if (!window.Kakao) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = '//developers.kakao.com/sdk/js/kakao.js';
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('카카오 SDK 로드 실패'));
+          document.head.appendChild(script);
+        });
+      }
+
+      // 카카오 SDK 초기화
+      if (!window.Kakao.isInitialized()) {
+        const kakaoKey = import.meta.env.VITE_ACCOUNT_KAKAO_JAVASCRIPT_KEY;
+        if (!kakaoKey) {
+          throw new Error('Account용 카카오 API 키가 설정되지 않았습니다.');
+        }
+        window.Kakao.init(kakaoKey);
+      }
+
+      // 카카오 로그인
+      window.Kakao.Auth.login({
+        success: async (authObj: any) => {
+          try {
+            // accessToken으로 백엔드 카카오 로그인 API 호출
+            await kakaoLogin(authObj.access_token);
+            console.log('Kakao login completed successfully'); // 디버깅용
+            setSuccess('카카오 로그인이 완료되었습니다!');
+            setTimeout(() => {
+              onSuccess?.();
+            }, 1000);
+          } catch (err: unknown) {
+            console.error('Kakao login error:', err); // 디버깅용
+            setError('카카오 로그인 처리 중 오류가 발생했습니다.');
+          }
+        },
+        fail: (error: any) => {
+          setError('카카오 로그인에 실패했습니다.');
+        }
+      });
     } catch (error) {
-      console.error('카카오 로그인 실패:', error);
-      setError('카카오 로그인에 실패했습니다.');
+      setError('카카오 로그인 중 오류가 발생했습니다.');
     }
   };
 
@@ -65,10 +115,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
           className="mx-auto h-32 w-auto mb-3 cursor-pointer"
           onClick={() => navigate('/')}
           onError={(e) => {
-            console.error('Logo failed to load');
             e.currentTarget.style.display = 'none';
           }}
-          onLoad={() => console.log('Logo loaded successfully')}
         />
         <p className="text-2xl text-gray-600 mb-12">
           로그인해서 <span className="text-blue-600 font-semibold">반려동물</span>과<br />함께하세요
@@ -83,9 +131,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
             </div>
             <input
               type="text"
-              id="id"
-              name="id"
-              value={formData.id}
+              id="username"
+              name="username"
+              value={formData.username}
               onChange={handleInputChange}
               className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="아이디를 입력하세요"
@@ -126,12 +174,29 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
           </div>
         )}
 
+        {success && (
+          <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-md text-sm flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            {success}
+          </div>
+        )}
+
         <button
           type="submit"
-          disabled={isLoading}
-          className="w-full bg-blue-500 disabled:bg-blue-300 text-white font-medium py-2 px-4 rounded-md transition duration-200"
+          disabled={isLoading || !!success}
+          className="w-full bg-blue-500 disabled:bg-blue-300 text-white font-medium py-3 px-4 rounded-md transition duration-200 flex items-center justify-center gap-2"
         >
-          {isLoading ? '로그인 중...' : '로그인'}
+          {isLoading && (
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+          )}
+          {success && (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+          {isLoading ? '로그인 중...' : success ? '로그인 완료!' : '로그인'}
         </button>
       </form>
 
@@ -148,14 +213,22 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
         <button
           type="button"
           onClick={handleKakaoLogin}
-          disabled={isLoading}
+          disabled={isLoading || !!success}
           className="mt-4 w-full bg-[#FEE500] hover:bg-[#FDD835] disabled:opacity-50 disabled:cursor-not-allowed text-black font-medium py-3 px-4 rounded-md transition duration-200 flex items-center justify-center gap-3 border border-gray-300"
           style={{ fontSize: '16px', height: '50px' }}
         >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M10 0C4.477 0 0 3.71 0 8.286c0 2.971 1.969 5.582 4.9 7.002L3.8 19.2c-.1.4.3.7.7.5l4.8-2.4c.2 0 .3 0 .5 0h.4c5.523 0 10-3.71 10-8.286C20 3.71 15.523 0 10 0z" fill="#3C1E1E"/>
-          </svg>
-          카카오로 로그인
+          {isLoading ? (
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-black border-t-transparent"></div>
+          ) : success ? (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 0C4.477 0 0 3.71 0 8.286c0 2.971 1.969 5.582 4.9 7.002L3.8 19.2c-.1.4.3.7.7.5l4.8-2.4c.2 0 .3 0 .5 0h.4c5.523 0 10-3.71 10-8.286C20 3.71 15.523 0 10 0z" fill="#3C1E1E"/>
+            </svg>
+          )}
+          {isLoading ? '로그인 중...' : success ? '로그인 완료!' : '카카오로 로그인'}
         </button>
 
       </div>

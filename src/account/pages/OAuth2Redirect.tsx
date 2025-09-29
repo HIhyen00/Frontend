@@ -20,7 +20,6 @@ const OAuth2Redirect: React.FC = () => {
 
         // 에러가 있는 경우
         if (error) {
-          console.error('OAuth2 에러:', error);
           setError('로그인 중 오류가 발생했습니다.');
           setTimeout(() => navigate('/login', { replace: true }), 2000);
           return;
@@ -46,7 +45,6 @@ const OAuth2Redirect: React.FC = () => {
             window.location.href = '/';
             return;
           } catch (userError) {
-            console.error('사용자 정보 조회 실패:', userError);
             // 토큰이 있어도 사용자 정보를 가져올 수 없으면 다시 로그인
             localStorage.removeItem('token');
             localStorage.removeItem('refreshToken');
@@ -89,18 +87,15 @@ const OAuth2Redirect: React.FC = () => {
             window.location.href = '/';
             return;
           } catch (tokenError) {
-            console.error('토큰 교환 실패:', tokenError);
             setError('로그인 처리 중 오류가 발생했습니다.');
           }
         }
 
         // 필요한 파라미터가 없는 경우
-        console.error('OAuth2 로그인 실패: 필요한 파라미터가 없습니다.');
         setError('로그인 정보가 올바르지 않습니다.');
         setTimeout(() => navigate('/login', { replace: true }), 2000);
 
       } catch (err) {
-        console.error('OAuth2 처리 중 오류:', err);
         setError('로그인 처리 중 오류가 발생했습니다.');
         setTimeout(() => navigate('/login', { replace: true }), 2000);
       }

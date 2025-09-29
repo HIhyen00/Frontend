@@ -66,7 +66,7 @@ interface AuthContextType extends AuthState {
   login: (data: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
-  kakaoLogin: () => Promise<void>;
+  kakaoLogin: (accessToken: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -98,16 +98,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await authService.login(data);
 
       const user = {
-        accountId: response.accountId,
+        accountId: response.userId,  // userId로 수정
         username: response.username,
       };
 
-      localStorage.setItem('token', response.token);
+      localStorage.setItem('token', response.accessToken);  // accessToken으로 수정
       localStorage.setItem('user', JSON.stringify(user));
 
       dispatch({
         type: 'LOGIN_SUCCESS',
-        payload: { user, token: response.token }
+        payload: { user, token: response.accessToken }  // accessToken으로 수정
       });
     } catch (error) {
       dispatch({ type: 'LOGIN_FAILURE' });
@@ -130,7 +130,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       await authService.logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      // Logout error handled silently
     } finally {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -138,8 +138,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const kakaoLogin = async () => {
-    await authService.kakaoLogin();
+  const kakaoLogin = async (accessToken: string) => {
+    try {
+      dispatch({ type: 'LOGIN_START' });
+      const response = await authService.kakaoLogin(accessToken);
+
+      const user = {
+        accountId: response.userId,  // userId로 수정
+        username: response.username,
+      };
+
+      localStorage.setItem('token', response.accessToken);  // accessToken으로 수정
+      localStorage.setItem('user', JSON.stringify(user));
+
+      dispatch({
+        type: 'LOGIN_SUCCESS',
+        payload: { user, token: response.accessToken }  // accessToken으로 수정
+      });
+    } catch (error) {
+      dispatch({ type: 'LOGIN_FAILURE' });
+      throw error;
+    }
   };
 
   const value: AuthContextType = {

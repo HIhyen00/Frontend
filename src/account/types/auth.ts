@@ -6,21 +6,21 @@ export interface User {
 }
 
 export interface LoginRequest {
-  id: string;
+  username: string;
   password: string;
 }
 
 export interface LoginResponse {
-  token: string;
-  accountId: number;
+  accessToken: string;
+  userId: number;
   username: string;
-  expiresInSeconds: number;
-  refreshToken?: string;
+  expiresIn: string; // Duration from backend will be converted to string
 }
 
 export interface RegisterRequest {
   id: string;
   password: string;
+  email: string;
   name: string;
   phoneNumber: string;
 }
