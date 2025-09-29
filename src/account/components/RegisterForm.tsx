@@ -14,6 +14,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
     id: '',
     password: '',
     confirmPassword: '',
+    email: '',
     name: '',
     phoneNumber: '',
   });
@@ -62,7 +63,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
 
     try {
       const { confirmPassword, ...registerData } = formData;
-      console.log('Removed confirmPassword:', confirmPassword);
       await register(registerData);
       onSuccess?.();
     } catch (err: unknown) {
@@ -86,10 +86,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
           className="mx-auto h-32 w-auto mb-3 cursor-pointer"
           onClick={() => navigate('/')}
           onError={(e) => {
-            console.error('Logo failed to load');
             e.currentTarget.style.display = 'none';
           }}
-          onLoad={() => console.log('Logo loaded successfully')}
         />
         <p className="text-2xl text-gray-600 mb-12">
           <span className="text-blue-600 font-semibold">반려동물</span>과 함께할<br />계정을 만들어보세요

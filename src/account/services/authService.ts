@@ -1,10 +1,11 @@
 import axios from 'axios';
 import type { LoginRequest, LoginResponse, RegisterRequest } from '../types/auth';
+import { ErrorHandler } from '../../shared/utils/errorHandler';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8005/api';
+const ACCOUNT_API_BASE_URL = import.meta.env.VITE_ACCOUNT_API_BASE_URL || 'http://localhost:8005/api';
 
 const authAPI = axios.create({
-  baseURL: `${API_BASE_URL}/auth`,
+  baseURL: `${ACCOUNT_API_BASE_URL}/auth`,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -12,15 +13,27 @@ const authAPI = axios.create({
 
 authAPI.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  if (token) {
+  if (token && token !== 'undefined' && token !== 'null') {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
+authAPI.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    ErrorHandler.handleAndNotify(error);
+    return Promise.reject(error);
+  }
+);
+
 export const authService = {
   async login(data: LoginRequest): Promise<LoginResponse> {
     const response = await authAPI.post<LoginResponse>('/login', data);
+    // Store token for future requests
+    if (response.data.accessToken) {
+      localStorage.setItem('token', response.data.accessToken);
+    }
     return response.data;
   },
 
@@ -30,15 +43,15 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    await authAPI.post('/logout');
-  },
-
-  async refreshToken(): Promise<LoginResponse> {
-    const refreshToken = localStorage.getItem('refreshToken');
-    const response = await authAPI.post<LoginResponse>('/refresh', {
-      refreshToken,
-    });
-    return response.data;
+    try {
+      await authAPI.post('/logout');
+    } catch (error) {
+      // 로그아웃 API 실패해도 로컬 토큰은 정리
+      console.warn('Logout API failed, but clearing local token:', error);
+    } finally {
+      // 항상 로컬 토큰 정리
+      localStorage.removeItem('token');
+    }
   },
 
   async getCurrentUser() {
@@ -46,8 +59,19 @@ export const authService = {
     return response.data;
   },
 
-  async kakaoLogin(): Promise<void> {
-    const redirectUri = `${window.location.origin}/oauth2/redirect`;
-    window.location.href = `${API_BASE_URL.replace('/api', '')}/oauth2/authorization/kakao?redirect_uri=${encodeURIComponent(redirectUri)}`;
+  async kakaoLogin(accessToken: string): Promise<LoginResponse> {
+    console.log('Kakao login request with accessToken:', accessToken);
+    const response = await authAPI.post<LoginResponse>('/kakao/token', {
+      accessToken
+    });
+    console.log('Kakao login response:', response.data);
+    // Store token for future requests
+    if (response.data.accessToken) {
+      console.log('Storing token:', response.data.accessToken);
+      localStorage.setItem('token', response.data.accessToken);
+    } else {
+      console.warn('No accessToken in response:', response.data);
+    }
+    return response.data;
   },
 };

@@ -9,8 +9,23 @@ export default defineConfig({
     ],
     server: {
         proxy: {
+            // Account API routes
+            '/api/auth': {
+                target: 'http://localhost:8005',
+                changeOrigin: true,
+                secure: false,
+                rewrite: (path) => path
+            },
+            // Pet-Walk API routes
+            '/api/kakao-maps': {
+                target: 'http://localhost:8002',
+                changeOrigin: true,
+                secure: false,
+                rewrite: (path) => path
+            },
+            // Default fallback for any other /api routes
             '/api': {
-                target: 'http://localhost:8082',
+                target: 'http://localhost:8002',
                 changeOrigin: true,
                 secure: false,
             }

@@ -1,5 +1,5 @@
 import {useState, useCallback, useEffect, useRef} from "react";
-import {api} from '../utils/Api.tsx';
+import {api} from '../utils/Api.ts';
 import type {KakaoBackendSearchResponse} from "../types/kakaoMapsApi.ts";
 import {useKakaoMaps} from './useKakaoMaps';
 

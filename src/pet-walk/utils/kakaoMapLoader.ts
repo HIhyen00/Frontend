@@ -71,7 +71,7 @@ class KakaoMapLoader {
 
             // 기본 설정
             const {
-                appKey = import.meta.env.VITE_KAKAO_API_JAVASCRIPT_KEY || '',
+                appKey = import.meta.env.VITE_PETWALK_KAKAO_JAVASCRIPT_KEY || import.meta.env.VITE_KAKAO_API_JAVASCRIPT_KEY || '',
                 libraries = ['services', 'clusterer', 'drawing'],
                 autoload = false // 기본값을 false로 변경
             } = options;

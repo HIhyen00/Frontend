@@ -1,7 +1,9 @@
 import axios from 'axios';
+import { ErrorHandler } from '../../shared/utils/errorHandler';
 
-// API 기본 설정 (프록시 사용)
-const BASE_URL = '/api';
+// Pet-Walk API 전용 설정
+const PETWALK_API_BASE_URL = import.meta.env.VITE_PETWALK_API_BASE_URL || 'http://localhost:8005';
+const BASE_URL = '/api'; // 프록시 사용시
 
 // axios 인스턴스 생성
 const api = axios.create({
@@ -26,15 +28,13 @@ api.interceptors.request.use(
     }
 );
 
-// 응답 인터셉터 (에러 처리)
+// 응답 인터셉터 (통합 에러 처리)
 api.interceptors.response.use(
     (response) => {
         return response;
     },
     (error) => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-        }
+        ErrorHandler.handleAndNotify(error);
         return Promise.reject(error);
     }
 );

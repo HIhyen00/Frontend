@@ -44,7 +44,7 @@ const PetWalk = React.memo(() => {
                     <div className="text-xs bg-gray-100 p-2 rounded mb-4">
                         <p>디버그 정보:</p>
                         <p>- useMaps 반환값: null</p>
-                        <p>- Kakao API Key: {import.meta.env.VITE_KAKAO_API_JAVASCRIPT_KEY ? '설정됨' : '누락됨'}</p>
+                        <p>- Kakao API Key: {import.meta.env.VITE_PETWALK_KAKAO_JAVASCRIPT_KEY ? '설정됨' : '누락됨'}</p>
                     </div>
                     <button
                         onClick={() => window.location.reload()}
