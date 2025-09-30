@@ -10,6 +10,7 @@ const PetSns = lazy(() => import("../sns/pages/PetSns.tsx"));
 const PetWalk = lazy(() => import("../pet-walk/pages/PetWalk.tsx"));
 const MyPetPage = lazy(() => import("../my-pet/pages/my-pet/MyPetPage.tsx"));
 const Login = lazy(() => import("../account/pages/Login.tsx"));
+const MedicalRecord = lazy(() => import("../my-pet/pages/medical-record/MedicalRecordPage.tsx"));
 
 function AppRouter() {
     return (
@@ -24,6 +25,7 @@ function AppRouter() {
                         <Route path="/pet-walk" element={<PetWalk/>}/>
                         <Route path="/my-pet" element={<MyPetPage/>}/>
                         <Route path="/health-report/:petId" element={<HealthReportPage />}/>
+                        <Route path="/medical-record/:petId" element={<MedicalRecord/>}/>
                     </Route>
                 </Routes>
             </Suspense>

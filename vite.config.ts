@@ -23,6 +23,12 @@ export default defineConfig({
                 secure: false,
                 rewrite: (path) => path
             },
+            // My-Pet API routes
+            '/api/pet': {
+                target: 'http://localhost:8003',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api\/pet/, '')
+            },
             // Default fallback for any other /api routes
             '/api': {
                 target: 'http://localhost:8002',
