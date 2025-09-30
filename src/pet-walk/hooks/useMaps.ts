@@ -23,11 +23,11 @@ const CATEGORY_CONFIG = {
         categoryCode: null,
         description: '애견미용 전용 검색'
     },
-    '애견공원': {
+    '공원': {
         searchType: 'KEYWORD' as const,
-        query: '애견공원',
+        query: '공원',
         categoryCode: null,
-        description: '애견공원 전용 검색'
+        description: '공원 전용 검색'
     },
     '애견카페': {
         searchType: 'KEYWORD' as const,
@@ -121,8 +121,8 @@ export const useMaps = () => {
         console.log('모든 마커 및 선택 상태 초기화 완료');
     }, [searchMarkers, currentMarker, currentInfoWindow]);
 
-    // 안전한 커스텀 마커 생성 (외부 이미지 의존성 제거)
-    const createCustomMarkerImage = useCallback((color: 'red' | 'blue' | 'green' = 'red') => {
+    // 안전한 커스텀 마커 생성 (원형 핀 스타일, 터치 친화적)
+    const createCustomMarkerImage = useCallback((color: 'red' | 'blue' | 'green' = 'red', isSelected: boolean = false) => {
         if (!kakaoMapsLoaded || !window.kakao?.maps) return null;
 
         const colorMap: Record<string, string> = {
@@ -133,24 +133,45 @@ export const useMaps = () => {
 
         const fillColor = colorMap[color] || colorMap.red;
 
-        // Base64 인코딩된 SVG 마커 (외부 서버 의존성 없음)
-        const svg = `<svg width="24" height="35" viewBox="0 0 24 35" xmlns="http://www.w3.org/2000/svg">
+        // 선택된 마커는 더 크게
+        const size = isSelected ? 36 : 32;
+        const pinHeight = size * 1.5;
+
+        // 원형 핀 마커 디자인
+        const svg = `<svg width="${size}" height="${pinHeight}" viewBox="0 0 ${size} ${pinHeight}" xmlns="http://www.w3.org/2000/svg">
             <defs>
-                <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                <filter id="shadow-${color}-${isSelected}" x="-50%" y="-50%" width="200%" height="200%">
                     <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/>
                 </filter>
+                ${isSelected ? `
+                <radialGradient id="glow-${color}">
+                    <stop offset="0%" style="stop-color:${fillColor};stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:${fillColor};stop-opacity:0.8" />
+                </radialGradient>` : ''}
             </defs>
-            <path d="M12 2c-5.5 0-10 4.5-10 10 0 7.5 10 20 10 20s10-12.5 10-20c0-5.5-4.5-10-10-10z"
-                  fill="${fillColor}"
-                  stroke="white"
-                  stroke-width="2"
-                  filter="url(#shadow)"/>
-            <circle cx="12" cy="12" r="3" fill="white"/>
+            <!-- 핀 본체 (원형) -->
+            <circle
+                cx="${size/2}"
+                cy="${size/2}"
+                r="${size/2 - 2}"
+                fill="${isSelected ? `url(#glow-${color})` : fillColor}"
+                stroke="white"
+                stroke-width="3"
+                filter="url(#shadow-${color}-${isSelected})"/>
+            <!-- 핀 하단 포인터 -->
+            <path
+                d="M${size/2} ${size/2 + size/4} L${size/2 - size/8} ${size/2} L${size/2 + size/8} ${size/2} Z"
+                fill="${isSelected ? `url(#glow-${color})` : fillColor}"
+                stroke="white"
+                stroke-width="2"
+                filter="url(#shadow-${color}-${isSelected})"/>
+            <!-- 중앙 도트 -->
+            <circle cx="${size/2}" cy="${size/2}" r="${isSelected ? '6' : '5'}" fill="white" opacity="0.9"/>
         </svg>`;
 
         const encodedSvg = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
-        const imageSize = new window.kakao.maps.Size(24, 35);
-        const imageOption = { offset: new window.kakao.maps.Point(12, 35) };
+        const imageSize = new window.kakao.maps.Size(size, pinHeight);
+        const imageOption = { offset: new window.kakao.maps.Point(size/2, size/2) };
 
         return new window.kakao.maps.MarkerImage(encodedSvg, imageSize, imageOption);
     }, [kakaoMapsLoaded]);
@@ -183,39 +204,12 @@ export const useMaps = () => {
                 title: place.place_name
             });
 
-            // 마커 클릭 이벤트 (화면 좌표 계산 개선)
-            window.kakao.maps.event.addListener(marker, 'click', () => {
+            // 마커 클릭 이벤트 (개선된 버전 - 에러 처리 및 UX 향상)
+            const handleMarkerClick = () => {
                 console.log('마커 클릭됨:', place.place_name);
 
-                // 지도 컨테이너 확인
-                const mapContainer = document.getElementById('map');
-                if (!mapContainer) {
-                    console.error('지도 컨테이너를 찾을 수 없습니다.');
-                    return;
-                }
-
-                // 마커 위치를 화면 좌표로 변환
-                const markerPosition = marker.getPosition();
-                const projection = map.getProjection();
-
-                try {
-                    // 카카오맵 API를 사용한 화면 좌표 변환
-                    const screenPoint = projection.pointFromCoords(markerPosition);
-                    const mapRect = mapContainer.getBoundingClientRect();
-
-                    // 실제 화면 좌표 계산 (지도 컨테이너 기준)
-                    const screenX = mapRect.left + screenPoint.x;
-                    const screenY = mapRect.top + screenPoint.y;
-
-                    console.log('마커 화면 좌표:', { x: screenX, y: screenY });
-                    console.log('지도 컨테이너 위치:', mapRect);
-
-                    setSelectedPlacePosition({ x: screenX, y: screenY });
-                } catch (error) {
-                    console.error('화면 좌표 계산 오류:', error);
-                    // 실패 시 기본 위치 사용
-                    setSelectedPlacePosition(null);
-                }
+                // 선택 시 시각적 피드백을 위해 마커 위치 정보 저장
+                setSelectedPlacePosition(null);
 
                 // 거리 계산 (지도 중심 기준)
                 const mapCenter = map.getCenter();
@@ -234,10 +228,24 @@ export const useMaps = () => {
 
                 setSelectedPlace(placeWithDistance);
 
-                // 지도를 부드럽게 이동
+                // 지도를 부드럽게 이동 (약간의 오프셋으로 마커가 중앙에 오도록)
                 const moveLatLng = new window.kakao.maps.LatLng(parseFloat(place.y), parseFloat(place.x));
                 map.panTo(moveLatLng);
-            });
+
+                // 선택된 마커 강조 효과
+                const currentImage = marker.getImage();
+                if (currentImage) {
+                    // 선택된 마커는 빨간색으로 변경
+                    const selectedImage = createCustomMarkerImage('red');
+                    marker.setImage(selectedImage);
+                }
+            };
+
+            // 터치/클릭 이벤트 모두 처리
+            window.kakao.maps.event.addListener(marker, 'click', handleMarkerClick);
+
+            // 마커에 z-index 설정 (선택 시 상위로)
+            marker.setZIndex(index === 0 ? 100 : 50);
 
             newMarkers.push(marker);
             bounds.extend(position);
@@ -446,15 +454,15 @@ export const useMaps = () => {
                         title: '현재 위치'
                     });
 
-                    // 현재 위치 인포윈도우 (개선된 디자인)
+                    // 현재 위치 인포윈도우 (블루 테마로 업데이트)
                     const infoWindowContent = `
                         <div style="
                             padding: 16px;
                             min-width: 240px;
                             font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
                             border-radius: 12px;
-                            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            box-shadow: 0 4px 20px rgba(59,130,246,0.3);
+                            background: #3b82f6;
                             color: white;
                         ">
                             <div style="
@@ -470,11 +478,11 @@ export const useMaps = () => {
                             </div>
                             <div style="
                                 font-size: 13px;
-                                opacity: 0.9;
+                                opacity: 0.95;
                                 line-height: 1.5;
-                                background: rgba(255,255,255,0.1);
-                                padding: 8px;
-                                border-radius: 6px;
+                                background: rgba(255,255,255,0.2);
+                                padding: 10px;
+                                border-radius: 8px;
                             ">
                                 <div>위도: ${latitude.toFixed(6)}</div>
                                 <div>경도: ${longitude.toFixed(6)}</div>
