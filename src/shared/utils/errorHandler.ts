@@ -24,8 +24,11 @@ export class ErrorHandler {
         return data?.message || '잘못된 요청입니다.';
 
       case 401:
-        localStorage.removeItem('token');
-        return '로그인이 필요합니다.';
+        // 디버깅을 위해 토큰 삭제 주석 처리
+        console.error('401 Unauthorized - Token:', localStorage.getItem('token'));
+        console.error('401 Error response:', data);
+        // localStorage.removeItem('token');
+        return data?.error || '인증에 실패했습니다.';
 
       case 403:
         return '접근 권한이 없습니다.';

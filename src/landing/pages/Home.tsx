@@ -1,21 +1,21 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaPaw, FaHeart, FaUserFriends, FaCalendarAlt, FaClipboardList, FaComments, FaArrowRight, FaPlay, FaQuoteLeft, FaStar } from "react-icons/fa";
-import { MdPets, MdHealthAndSafety, MdOutlineLocalGroceryStore } from "react-icons/md";
-import imge from '../../assets/images/landingPetImage.png';
+import { MdHealthAndSafety, MdOutlineLocalGroceryStore } from "react-icons/md";
+import landingImg from '../../assets/images/landingPetImage.png';
 import { RiHeartPulseFill } from "react-icons/ri";
 
 function Home() {
     const [activeTab, setActiveTab] = useState<'sns' | 'management'>('sns');
     const [isVisible, setIsVisible] = useState(false);
     const navigate = useNavigate();
-    
+
     useEffect(() => {
         // 페이지 로드 후 애니메이션 효과를 위한 타이머
         const timer = setTimeout(() => {
             setIsVisible(true);
         }, 100);
-        
+
         return () => clearTimeout(timer);
     }, []);
 
@@ -29,7 +29,7 @@ function Home() {
                     <div className="absolute top-[20%] right-[10%] w-72 h-72 rounded-full bg-purple-400 mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
                     <div className="absolute bottom-[10%] left-[30%] w-80 h-80 rounded-full bg-pink-400 mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
                 </div>
-                
+
                 <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between relative z-10">
                     <div className={`md:w-1/2 mb-10 md:mb-0 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
                         <div className="inline-block mb-4 px-4 py-1 bg-white bg-opacity-20 backdrop-blur-sm rounded-full">
@@ -46,11 +46,11 @@ function Home() {
                             당신의 소중한 반려동물과 함께하는 모든 순간을 기록하고 관리하며 다른 반려인들과 공유하세요.
                         </p>
                         <div className="flex flex-wrap gap-4">
-                            <button 
+                            <button
                                 onClick={() => navigate('/login')}
                                 className="bg-white text-purple-700 px-8 py-4 rounded-full font-semibold hover:shadow-lg hover:shadow-purple-500/30 transition duration-300 flex items-center group"
                             >
-                                <FaPaw className="mr-2" /> 
+                                <FaPaw className="mr-2" />
                                 시작하기
                                 <FaArrowRight className="ml-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
                             </button>
@@ -69,18 +69,18 @@ function Home() {
                             </p>
                         </div>
                     </div>
-                    
+
                     <div className={`md:w-1/2 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
                         <div className="relative">
                             <div className="absolute -top-6 -left-6 w-24 h-24 bg-gradient-to-br from-pink-400 to-purple-500 rounded-lg rotate-12 opacity-50 blur-lg"></div>
                             <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg -rotate-12 opacity-50 blur-lg"></div>
-                            
+
                             <div className="bg-white p-3 rounded-2xl shadow-2xl relative z-10 backdrop-blur-sm bg-opacity-80">
                                 {/* 이미지 자리 */}
                                 <div className="bg-gradient-to-br from-purple-50 to-blue-50 h-72 md:h-96 rounded-xl flex items-center justify-center overflow-hidden relative">
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         {/*<FaPaw className="text-9xl text-purple-200" />*/}
-                                        <img src={imge} style={{ width: '100%', height: '100%' }} />
+                                        <img src={landingImg} style={{ width: '100%', height: '100%' }} />
 
                                     </div>
                                     {/*<div className="relative z-10 text-center px-6">*/}
@@ -88,17 +88,17 @@ function Home() {
                                     {/*    <span className="text-gray-600 text-xl font-medium block">귀여운 반려동물 이미지</span>*/}
                                     {/*</div>*/}
                                 </div>
-                                
+
                                 {/* 하단 기능 아이콘 */}
 
                             </div>
-                            
+
                             {/* 장식요소 */}
 
                         </div>
                     </div>
                 </div>
-                
+
                 {/* 경사된 배경 하단 */}
                 <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-b from-transparent to-white"></div>
             </section>
@@ -111,10 +111,10 @@ function Home() {
                         <h2 className="text-4xl font-bold mt-2 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500">My Real Pet</h2>
                         <p className="text-gray-600 text-lg">반려동물과 함께하는 생활을 더 행복하고 편리하게 만들어드립니다.</p>
                     </div>
-                    
+
                     <div className="flex justify-center mb-12">
                         <div className="inline-flex rounded-full bg-white shadow-md p-1.5">
-                            <button 
+                            <button
                                 onClick={() => setActiveTab('sns')}
                                 className={`px-8 py-3 rounded-full font-medium transition-all duration-300 ${activeTab === 'sns' 
                                     ? 'bg-gradient-to-r from-purple-600 to-blue-500 text-white shadow-lg' 
@@ -122,7 +122,7 @@ function Home() {
                             >
                                 <span className="flex items-center"><FaComments className="mr-2" /> 펫 SNS</span>
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setActiveTab('management')}
                                 className={`px-8 py-3 rounded-full font-medium transition-all duration-300 ${activeTab === 'management' 
                                     ? 'bg-gradient-to-r from-purple-600 to-blue-500 text-white shadow-lg' 
@@ -132,7 +132,7 @@ function Home() {
                             </button>
                         </div>
                     </div>
-                    
+
                     <div className="mt-8">
                         {activeTab === 'sns' && (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -171,7 +171,7 @@ function Home() {
                                 </div>
                             </div>
                         )}
-                        
+
                         {activeTab === 'management' && (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                 <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group relative overflow-hidden">
@@ -221,7 +221,7 @@ function Home() {
                         <h2 className="text-4xl font-bold mt-2 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500">사용자 후기</h2>
                         <p className="text-gray-600 text-lg">행복한 반려인들이 남긴 진심 어린 후기를 만나보세요.</p>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 relative">
                             <div className="absolute top-6 left-6 text-purple-200">
@@ -245,7 +245,7 @@ function Home() {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 relative md:mt-8">
                             <div className="absolute top-6 left-6 text-blue-200">
                                 <FaQuoteLeft className="text-4xl opacity-50" />
@@ -268,7 +268,7 @@ function Home() {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 relative">
                             <div className="absolute top-6 left-6 text-pink-200">
                                 <FaQuoteLeft className="text-4xl opacity-50" />

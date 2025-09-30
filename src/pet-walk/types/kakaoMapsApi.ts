@@ -87,3 +87,41 @@ export interface MeetingPlaceResponse {
     };
     recommendedPlaces: any[];
 }
+
+// Walk Route Types
+export interface Coordinate {
+    lat: number;
+    lng: number;
+}
+
+export interface CreateWalkRouteRequest {
+    name: string;
+    description?: string;
+    coordinates: Coordinate[];
+    [key: string]: any;
+}
+
+export interface UpdateWalkRouteRequest {
+    name: string;
+    description?: string;
+    coordinates: Coordinate[];
+    [key: string]: any;
+}
+
+export interface WalkRouteResponse {
+    id: number;
+    name: string;
+    description?: string;
+    coordinates: Coordinate[];
+    distance: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface WalkRouteListResponse {
+    id: number;
+    name: string;
+    description?: string;
+    distance: number;
+    createdAt: string;
+}
