@@ -8,19 +8,15 @@ function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const navigate = useNavigate();
-    const {isAuthenticated, user, logout} = useAuth();
+    const {isAuthenticated, user, setShowLogoutModal} = useAuth();
 
     const goToPage = (url: string) => {
         navigate(url);
     }
 
-    const handleLogout = async () => {
-        try {
-            await logout();
-            setUserMenuOpen(false);
-        } catch (error) {
-            console.error('Logout failed:', error);
-        }
+    const openLogoutModal = () => {
+        setShowLogoutModal(true);
+        setUserMenuOpen(false);
     };
 
     useEffect(() => {
@@ -81,7 +77,16 @@ function Header() {
                                     onClick={(e) => e.stopPropagation()}
                                     className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50">
                                     <button
-                                        onClick={handleLogout}
+                                        onClick={() => {
+                                            navigate('/my-page');
+                                            setUserMenuOpen(false);
+                                        }}
+                                        className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
+                                        <FaUser/>
+                                        <span>마이페이지</span>
+                                    </button>
+                                    <button
+                                        onClick={openLogoutModal}
                                         className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
                                         <FaSignOutAlt/>
                                         <span>로그아웃</span>
@@ -125,7 +130,16 @@ function Header() {
                                     <span className="text-gray-800 font-medium">{user?.username}</span>
                                 </div>
                                 <button
-                                    onClick={handleLogout}
+                                    onClick={() => {
+                                        navigate('/my-page');
+                                        setMobileMenuOpen(false);
+                                    }}
+                                    className="w-full py-2 bg-blue-500 text-white rounded-full font-medium flex items-center justify-center space-x-2">
+                                    <FaUser/>
+                                    <span>마이페이지</span>
+                                </button>
+                                <button
+                                    onClick={openLogoutModal}
                                     className="w-full py-2 bg-red-500 text-white rounded-full font-medium flex items-center justify-center space-x-2">
                                     <FaSignOutAlt/>
                                     <span>로그아웃</span>

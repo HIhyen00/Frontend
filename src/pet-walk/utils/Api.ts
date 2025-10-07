@@ -1,9 +1,7 @@
 import {apiClient} from './axiosConfig.ts';
 import type {
-    KakaoBackendReverseGeocodingResponse,
     KakaoBackendSearchResponse,
     CreateWalkRouteRequest,
-    UpdateWalkRouteRequest,
     WalkRouteResponse,
     WalkRouteListResponse,
 } from '../types/kakaoMapsApi.ts';
@@ -37,32 +35,7 @@ export const api = {
             }
 
             const url = `/kakao-maps/search?${searchParams.toString()}`;
-            console.log('요청 URL:', url); // 디버깅용
-
             return await apiClient.get<KakaoBackendSearchResponse>(url);
-        } catch (error) {
-            console.error('주소 검색 실패:', error);
-            throw error;
-        }
-    },
-
-    reverseGeocoding: async (
-        x: string,
-        y: string,
-        inputCoord?: string
-    ): Promise<KakaoBackendReverseGeocodingResponse> => {
-        try {
-            const searchParams = new URLSearchParams();
-            searchParams.append('x', x);
-            searchParams.append('y', y);
-            if (inputCoord) {
-                searchParams.append('input_coord', inputCoord);
-            }
-
-            const url = `/kakao-maps/reverse-geocoding?${searchParams.toString()}`;
-            console.log('요청 URL:', url); // 디버깅용
-
-            return await apiClient.get<KakaoBackendReverseGeocodingResponse>(url);
         } catch (error) {
             console.error('주소 검색 실패:', error);
             throw error;
@@ -97,15 +70,6 @@ export const api = {
         }
     },
 
-    updateWalkRoute: async (routeId: number, request: UpdateWalkRouteRequest): Promise<WalkRouteResponse> => {
-        try {
-            return await apiClient.put<WalkRouteResponse>(`/walk-routes/${routeId}`, request);
-        } catch (error) {
-            console.error('산책로 수정 실패:', error);
-            throw error;
-        }
-    },
-
     deleteWalkRoute: async (routeId: number): Promise<void> => {
         try {
             await apiClient.delete(`/walk-routes/${routeId}`);
@@ -116,9 +80,5 @@ export const api = {
     }
 };
 
-// Export individual functions for convenience
-export const createWalkRoute = api.createWalkRoute;
-export const getWalkRoutes = api.getWalkRoutes;
-export const getWalkRoute = api.getWalkRoute;
-export const updateWalkRoute = api.updateWalkRoute;
-export const deleteWalkRoute = api.deleteWalkRoute;
+// Export individual functions
+export const {createWalkRoute, getWalkRoutes, getWalkRoute, deleteWalkRoute} = api;

@@ -1,16 +1,3 @@
-export interface BackendAddressSearchResponse {
-    total: number;
-    items: Array<{
-        title: string;
-        category?: string;
-        address: string;
-        roadAddress?: string;
-        mapX: string;
-        mapY: string;
-        distance?: string | null;
-    }>;
-}
-
 export interface KakaoBackendSearchResponse {
     meta: {
         total_count: number;
@@ -38,56 +25,6 @@ export interface KakaoBackendSearchResponse {
     }[];
 }
 
-export interface KakaoBackendReverseGeocodingResponse {
-    meta: {
-        total_count: number;
-    };
-    documents: {
-        address: {
-            address_name: string;
-            region_1depth_name: string;
-            region_2depth_name: string;
-            region_3depth_name: string;
-            mountain_yn: string;
-            main_address_no: string;
-            sub_address_no: string;
-        };
-        roadAddress: {
-            address_name: string;
-            region_1depth_name: string;
-            region_2depth_name: string;
-            region_3depth_name: string;
-            road_name: string;
-            underground_yn: string;
-            main_building_no: string;
-            sub_building_no: string;
-            building_name: string;
-            zone_no: string;
-        };
-    }[];
-}
-
-export interface MeetingLocation {
-    lat: number;
-    lng: number;
-}
-
-export interface MeetingPlaceRequest {
-    meetingLocations: MeetingLocation[];
-    categoryGroupCode?: string;
-    radius?: number;
-    size?: number;
-}
-
-export interface MeetingPlaceResponse {
-    meetingCenterPoint: {
-        lat: number;
-        lng: number;
-        participantCount: number;
-    };
-    recommendedPlaces: any[];
-}
-
 // Walk Route Types
 export interface Coordinate {
     lat: number;
@@ -98,14 +35,6 @@ export interface CreateWalkRouteRequest {
     name: string;
     description?: string;
     coordinates: Coordinate[];
-    [key: string]: any;
-}
-
-export interface UpdateWalkRouteRequest {
-    name: string;
-    description?: string;
-    coordinates: Coordinate[];
-    [key: string]: any;
 }
 
 export interface WalkRouteResponse {
@@ -122,6 +51,7 @@ export interface WalkRouteListResponse {
     id: number;
     name: string;
     description?: string;
+    coordinates: Coordinate[];
     distance: number;
     createdAt: string;
 }

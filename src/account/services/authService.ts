@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { LoginRequest, LoginResponse, RegisterRequest } from '../types/auth';
-import { ErrorHandler } from '../../shared/utils/errorHandler';
+import { setupAxiosInterceptors } from '../../shared/utils/axiosInterceptors';
 
 const ACCOUNT_API_BASE_URL = import.meta.env.VITE_ACCOUNT_API_BASE_URL || 'http://localhost:8005/api';
 
@@ -11,29 +11,12 @@ const authAPI = axios.create({
   },
 });
 
-authAPI.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token && token !== 'undefined' && token !== 'null') {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-authAPI.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    ErrorHandler.handleAndNotify(error);
-    return Promise.reject(error);
-  }
-);
+// 공통 인터셉터 설정
+setupAxiosInterceptors(authAPI);
 
 export const authService = {
   async login(data: LoginRequest): Promise<LoginResponse> {
     const response = await authAPI.post<LoginResponse>('/login', data);
-    // Store token for future requests
-    if (response.data.accessToken) {
-      localStorage.setItem('token', response.data.accessToken);
-    }
     return response.data;
   },
 
@@ -48,10 +31,8 @@ export const authService = {
     } catch (error) {
       // 로그아웃 API 실패해도 로컬 토큰은 정리
       console.warn('Logout API failed, but clearing local token:', error);
-    } finally {
-      // 항상 로컬 토큰 정리
-      localStorage.removeItem('token');
     }
+    // 토큰 정리는 useAuth에서 처리
   },
 
   async getCurrentUser() {
@@ -60,18 +41,13 @@ export const authService = {
   },
 
   async kakaoLogin(accessToken: string): Promise<LoginResponse> {
-    console.log('Kakao login request with accessToken:', accessToken);
     const response = await authAPI.post<LoginResponse>('/kakao/token', {
       accessToken
     });
-    console.log('Kakao login response:', response.data);
-    // Store token for future requests
-    if (response.data.accessToken) {
-      console.log('Storing token:', response.data.accessToken);
-      localStorage.setItem('token', response.data.accessToken);
-    } else {
-      console.warn('No accessToken in response:', response.data);
-    }
     return response.data;
+  },
+
+  async deleteAccount(): Promise<void> {
+    await authAPI.delete('/account');
   },
 };

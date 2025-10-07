@@ -1,8 +1,6 @@
 import axios from 'axios';
-import { ErrorHandler } from '../../shared/utils/errorHandler';
+import { setupAxiosInterceptors } from '../../shared/utils/axiosInterceptors';
 
-// Pet-Walk API 전용 설정
-const PETWALK_API_BASE_URL = import.meta.env.VITE_PETWALK_API_BASE_URL || 'http://localhost:8005';
 const BASE_URL = '/api'; // 프록시 사용시
 
 // axios 인스턴스 생성
@@ -14,30 +12,8 @@ const api = axios.create({
     },
 });
 
-// 요청 인터셉터 (토큰 자동 추가)
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
-
-// 응답 인터셉터 (통합 에러 처리)
-api.interceptors.response.use(
-    (response) => {
-        return response;
-    },
-    (error) => {
-        ErrorHandler.handleAndNotify(error);
-        return Promise.reject(error);
-    }
-);
+// 공통 인터셉터 설정
+setupAxiosInterceptors(api);
 
 // CRUD 함수들
 export const apiClient = {

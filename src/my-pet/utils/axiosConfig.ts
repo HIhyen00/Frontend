@@ -1,5 +1,7 @@
 import axios from 'axios';
-import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import type { AxiosInstance, InternalAxiosRequestConfig, AxiosError } from 'axios';
+import { setupResponseInterceptor } from '../../shared/utils/axiosInterceptors';
+
 // API 기본 URL 설정
 const BASE_URL = '/api/pet';
 
@@ -17,7 +19,7 @@ const axiosInstance: AxiosInstance = axios.create({
     withCredentials: true,
 });
 
-// 요청 인터셉터
+// 요청 인터셉터 (테스트 모드 지원)
 axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         if (config.headers) {
@@ -26,9 +28,13 @@ axiosInstance.interceptors.request.use(
                 config.headers.Authorization = TEST_TOKEN;
                 console.log('🔧 [DEV MODE] Using test token');
             } else {
-                // 일반 모드: localStorage에서 토큰 가져오기
-                const token = localStorage.getItem('accessToken');
-                if (token) {
+                // 일반 모드: localStorage 또는 sessionStorage에서 토큰 가져오기
+                let token = localStorage.getItem('token');
+                if (!token) {
+                    token = sessionStorage.getItem('token');
+                }
+
+                if (token && token !== 'undefined' && token !== 'null') {
                     config.headers.Authorization = `Bearer ${token}`;
                 }
             }
@@ -36,56 +42,28 @@ axiosInstance.interceptors.request.use(
 
         return config;
     },
-    (error: AxiosError) => {
-        return Promise.reject(error);
-    }
+    (error: AxiosError) => Promise.reject(error)
 );
 
-// 응답 인터셉터
-axiosInstance.interceptors.response.use(
-    (response: AxiosResponse) => {
-        return response;
-    },
-    async (error: AxiosError) => {
-        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-
-        // 401 에러 처리
-        if (error.response?.status === 401 && !originalRequest._retry && !USE_TEST_TOKEN) {
-            originalRequest._retry = true;
-
-            try {
-                const refreshToken = localStorage.getItem('refreshToken');
-                const response = await axios.post(`${BASE_URL}/auth/refresh`, {
-                    refreshToken
-                });
-
-                const { accessToken } = response.data;
-                localStorage.setItem('accessToken', accessToken);
-
-                if (originalRequest.headers) {
-                    originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-                }
-                return axiosInstance(originalRequest);
-            } catch (refreshError) {
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
-                window.location.href = '/login';
-                return Promise.reject(refreshError);
+// 응답 인터셉터 (공통 유틸리티 사용, 테스트 모드에서는 401 리다이렉트 제외)
+if (!USE_TEST_TOKEN) {
+    setupResponseInterceptor(axiosInstance);
+} else {
+    // 테스트 모드에서는 에러 로깅만
+    axiosInstance.interceptors.response.use(
+        (response) => response,
+        (error: AxiosError) => {
+            if (error.response) {
+                console.error('❌ API Error:', error.response.status, error.response.data);
+            } else if (error.request) {
+                console.error('❌ Network Error:', error.request);
+            } else {
+                console.error('❌ Error:', error.message);
             }
+            return Promise.reject(error);
         }
-
-        // 에러 로깅
-        if (error.response) {
-            console.error('❌ API Error:', error.response.status, error.response.data);
-        } else if (error.request) {
-            console.error('❌ Network Error:', error.request);
-        } else {
-            console.error('❌ Error:', error.message);
-        }
-
-        return Promise.reject(error);
-    }
-);
+    );
+}
 
 // 범용 CRUD 헬퍼 함수들
 export const apiHelper = {

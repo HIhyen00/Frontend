@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks';
-import { RegisterForm } from '../components';
+import RegisterForm from '../components/RegisterForm';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
