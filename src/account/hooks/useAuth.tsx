@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
+import React, {createContext, useContext, useReducer, useEffect, type ReactNode, useState} from 'react';
 import type { AuthState, LoginRequest, RegisterRequest } from '../types/auth';
-import { authService } from '../services';
+import { authService } from '../services/authService';
 
 interface AuthAction {
   type: 'LOGIN_START' | 'LOGIN_SUCCESS' | 'LOGIN_FAILURE' | 'LOGOUT' | 'RESTORE_AUTH' | 'REGISTER_START' | 'REGISTER_SUCCESS' | 'REGISTER_FAILURE';
@@ -63,51 +63,64 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 };
 
 interface AuthContextType extends AuthState {
-  login: (data: LoginRequest) => Promise<void>;
+  login: (data: LoginRequest, rememberMe?: boolean) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   kakaoLogin: (accessToken: string) => Promise<void>;
+  showLogoutModal: boolean;
+  setShowLogoutModal: (show: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
-    
+    // localStorage 또는 sessionStorage에서 토큰 확인
+    let token = localStorage.getItem('token');
+    let userStr = localStorage.getItem('user');
+
+    if (!token) {
+      token = sessionStorage.getItem('token');
+      userStr = sessionStorage.getItem('user');
+    }
+
     if (token && userStr) {
       try {
         const user = JSON.parse(userStr);
-        dispatch({ 
-          type: 'RESTORE_AUTH', 
-          payload: { user, token } 
+        dispatch({
+          type: 'RESTORE_AUTH',
+          payload: { user, token }
         });
       } catch {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
       }
     }
   }, []);
 
-  const login = async (data: LoginRequest) => {
+  const login = async (data: LoginRequest, rememberMe: boolean = false) => {
     try {
       dispatch({ type: 'LOGIN_START' });
       const response = await authService.login(data);
 
       const user = {
-        accountId: response.userId,  // userId로 수정
+        accountId: response.userId,
         username: response.username,
       };
 
-      localStorage.setItem('token', response.accessToken);  // accessToken으로 수정
-      localStorage.setItem('user', JSON.stringify(user));
+      // rememberMe에 따라 localStorage 또는 sessionStorage 사용
+      const storage = rememberMe ? localStorage : sessionStorage;
+      storage.setItem('token', response.accessToken);
+      storage.setItem('user', JSON.stringify(user));
 
       dispatch({
         type: 'LOGIN_SUCCESS',
-        payload: { user, token: response.accessToken }  // accessToken으로 수정
+        payload: { user, token: response.accessToken }
       });
     } catch (error) {
       dispatch({ type: 'LOGIN_FAILURE' });
@@ -132,28 +145,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error) {
       // Logout error handled silently
     } finally {
+      // 양쪽 스토리지 모두 정리
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
       dispatch({ type: 'LOGOUT' });
     }
   };
 
-  const kakaoLogin = async (accessToken: string) => {
+  const kakaoLogin = async (accessToken: string, rememberMe: boolean = true) => {
     try {
       dispatch({ type: 'LOGIN_START' });
       const response = await authService.kakaoLogin(accessToken);
 
       const user = {
-        accountId: response.userId,  // userId로 수정
+        accountId: response.userId,
         username: response.username,
       };
 
-      localStorage.setItem('token', response.accessToken);  // accessToken으로 수정
-      localStorage.setItem('user', JSON.stringify(user));
+      // rememberMe에 따라 localStorage 또는 sessionStorage 사용 (카카오는 기본 true)
+      const storage = rememberMe ? localStorage : sessionStorage;
+      storage.setItem('token', response.accessToken);
+      storage.setItem('user', JSON.stringify(user));
 
       dispatch({
         type: 'LOGIN_SUCCESS',
-        payload: { user, token: response.accessToken }  // accessToken으로 수정
+        payload: { user, token: response.accessToken }
       });
     } catch (error) {
       dispatch({ type: 'LOGIN_FAILURE' });
@@ -167,6 +185,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     register,
     logout,
     kakaoLogin,
+    showLogoutModal,
+    setShowLogoutModal,
   };
 
   return (

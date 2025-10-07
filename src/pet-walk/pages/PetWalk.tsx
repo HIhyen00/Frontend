@@ -1,7 +1,9 @@
 import React, {useEffect, useState, useCallback, useMemo, useRef} from "react";
-import {FaSearch, FaMapMarkerAlt, FaTimes, FaPlus, FaTrash, FaCheck, FaRoute} from "react-icons/fa";
+import {FaSearch, FaMapMarkerAlt, FaTimes, FaRoute} from "react-icons/fa";
 import {useMaps} from "../hooks/useMaps.ts";
 import {getWalkRoutes, deleteWalkRoute, createWalkRoute} from "../utils/Api.ts";
+import RoutePanel from "../components/RoutePanel";
+import RouteModal from "../components/RouteModal";
 
 const PetWalk = React.memo(() => {
     // Hooks
@@ -47,7 +49,8 @@ const PetWalk = React.memo(() => {
         closeWebView,
         getCurrentLocation,
         searchNearbyPlacesByMapCenter,
-        handleRadiusChange
+        handleRadiusChange,
+        clearAllMarkers
     } = mapsData;
 
     // State
@@ -64,7 +67,47 @@ const PetWalk = React.memo(() => {
     const [routeName, setRouteName] = useState('');
     const [routeDescription, setRouteDescription] = useState('');
     const [saving, setSaving] = useState(false);
+    const [selectedRoute, setSelectedRoute] = useState<any>(null); // 선택된 산책로
+    const [displayedRoutePolyline, setDisplayedRoutePolyline] = useState<any>(null); // 표시된 산책로 선
+    const [displayedRouteMarkers, setDisplayedRouteMarkers] = useState<any[]>([]); // 표시된 산책로 마커들
     const radiusSearchTimeoutRef = useRef<number | null>(null);
+    const errorTimeoutRef = useRef<number | null>(null);
+    const selectedPlaceRef = useRef<HTMLButtonElement | null>(null);
+    const isDrawingModeRef = useRef(isDrawingMode);
+
+    // isDrawingMode ref 동기화
+    useEffect(() => {
+        isDrawingModeRef.current = isDrawingMode;
+    }, [isDrawingMode]);
+
+    // Auto-dismiss error after 2 seconds
+    useEffect(() => {
+        if (error) {
+            if (errorTimeoutRef.current) {
+                clearTimeout(errorTimeoutRef.current);
+            }
+
+            errorTimeoutRef.current = window.setTimeout(() => {
+                setError(null);
+            }, 2000);
+        }
+
+        return () => {
+            if (errorTimeoutRef.current) {
+                clearTimeout(errorTimeoutRef.current);
+            }
+        };
+    }, [error, setError]);
+
+    // Auto-scroll to selected place
+    useEffect(() => {
+        if (selectedPlace && selectedPlaceRef.current) {
+            selectedPlaceRef.current.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest'
+            });
+        }
+    }, [selectedPlace]);
 
     // Categories
     const categories = useMemo(() => [
@@ -76,32 +119,60 @@ const PetWalk = React.memo(() => {
         {id: "애견호텔", label: "애견호텔", emoji: "🏨"}
     ], []);
 
+    // Check if user is logged in
+    const isLoggedIn = useCallback(() => {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        return !!token;
+    }, []);
+
     // Load saved routes
     const loadSavedRoutes = useCallback(async () => {
+        if (!isLoggedIn()) {
+            setError?.('로그인이 필요합니다.');
+            return;
+        }
+
         try {
             setLoadingRoutes(true);
             const routes = await getWalkRoutes();
             setSavedRoutes(routes || []);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to load routes:', error);
-            setError?.('산책로를 불러오는데 실패했습니다.');
+            setError?.(error?.koreanMessage || '산책로를 불러오는데 실패했습니다.');
         } finally {
             setLoadingRoutes(false);
         }
-    }, [setError]);
+    }, [setError, isLoggedIn]);
+
+    // Hide displayed route
+    const hideDisplayedRoute = useCallback(() => {
+        if (displayedRoutePolyline) {
+            displayedRoutePolyline.setMap(null);
+            setDisplayedRoutePolyline(null);
+        }
+        displayedRouteMarkers.forEach(marker => marker.setMap(null));
+        setDisplayedRouteMarkers([]);
+        setSelectedRoute(null);
+    }, [displayedRoutePolyline, displayedRouteMarkers]);
 
     // Delete route
     const handleDeleteRoute = useCallback(async (routeId: number) => {
-        if (!confirm('이 산책로를 삭제하시겠습니까?')) return;
+        const route = savedRoutes.find(r => r.id === routeId);
+        if (!confirm(`"${route?.name || '이 산책로'}"를 삭제하시겠습니까?`)) return;
 
         try {
             await deleteWalkRoute(routeId);
             setSavedRoutes(prev => prev.filter(route => route.id !== routeId));
-        } catch (error) {
+
+            // 삭제한 산책로가 현재 표시중이면 숨김
+            if (selectedRoute?.id === routeId) {
+                hideDisplayedRoute();
+            }
+        } catch (error: any) {
             console.error('Failed to delete route:', error);
-            setError?.('산책로 삭제에 실패했습니다.');
+            setError?.(error?.koreanMessage || '산책로 삭제에 실패했습니다.');
         }
-    }, [setError]);
+    }, [setError, selectedRoute, hideDisplayedRoute, savedRoutes]);
 
     // Save route
     const handleSaveRoute = useCallback(async () => {
@@ -118,29 +189,34 @@ const PetWalk = React.memo(() => {
                 coordinates: routePoints
             });
 
-            setRouteName('');
-            setRouteDescription('');
-            setRoutePoints([]);
-            setShowCreateModal(false);
+            // 1. 먼저 드로잉 모드 종료 (이게 가장 먼저!)
             setIsDrawingMode(false);
 
+            // 2. 폴리라인 제거
             if (routePolyline) {
                 routePolyline.setMap(null);
                 setRoutePolyline(null);
             }
 
-            // 마커들 제거
+            // 3. 마커들 제거
             routeMarkers.forEach(marker => marker.setMap(null));
             setRouteMarkers([]);
 
-            loadSavedRoutes();
-        } catch (error) {
+            // 4. 상태 초기화
+            setRoutePoints([]);
+            setRouteName('');
+            setRouteDescription('');
+            setShowCreateModal(false);
+
+            // 5. 저장된 산책로 목록 새로고침
+            await loadSavedRoutes();
+        } catch (error: any) {
             console.error('Failed to save route:', error);
-            setError?.('산책로 저장에 실패했습니다.');
+            setError?.(error?.koreanMessage || '산책로 저장에 실패했습니다.');
         } finally {
             setSaving(false);
         }
-    }, [routeName, routeDescription, routePoints, routePolyline, setError, loadSavedRoutes]);
+    }, [routeName, routeDescription, routePoints, routePolyline, setError, loadSavedRoutes, routeMarkers]);
 
     // Category search
     const handleCategorySearch = useCallback(async (category: string) => {
@@ -149,7 +225,8 @@ const PetWalk = React.memo(() => {
         setSelectedCategory(category);
         setSelectedPlace(null);
         await searchNearbyPlacesByMapCenter(category);
-    }, [loading, map?.instance, searchNearbyPlacesByMapCenter, setSelectedPlace]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loading, map?.instance]);
 
     // Map initialization
     useEffect(() => {
@@ -174,17 +251,16 @@ const PetWalk = React.memo(() => {
                 setError?.('지도 초기화에 실패했습니다.');
             }
         }
-    }, [kakaoMapsLoaded, map, handleCategorySearch, selectedCategory, setError]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [kakaoMapsLoaded, map?.instance]);
 
     // Route drawing click handler (별도 useEffect)
     useEffect(() => {
         if (!map?.instance) return;
 
         const clickListener = (mouseEvent: any) => {
-            // 드로잉 모드가 아닐 경우 무시
-            if (!isDrawingMode) return;
-
-            console.log('Map clicked in drawing mode');
+            // 드로잉 모드가 아닐 경우 무시 (ref 사용으로 항상 최신 값 참조)
+            if (!isDrawingModeRef.current) return;
 
             const latlng = mouseEvent.latLng;
             const newPoint = {lat: latlng.getLat(), lng: latlng.getLng()};
@@ -231,24 +307,6 @@ const PetWalk = React.memo(() => {
                 customOverlay.setMap(map.instance);
                 setRouteMarkers(prevMarkers => [...prevMarkers, customOverlay]);
 
-                // 기존 폴리라인 제거
-                if (routePolyline) {
-                    routePolyline.setMap(null);
-                }
-
-                // 새 폴리라인 생성
-                if (newPoints.length >= 2) {
-                    const polyline = new (window.kakao.maps as any).Polyline({
-                        path: newPoints.map(p => new window.kakao.maps.LatLng(p.lat, p.lng)),
-                        strokeWeight: 6,
-                        strokeColor: '#3b82f6',
-                        strokeOpacity: 0.9,
-                        strokeStyle: 'solid'
-                    });
-                    polyline.setMap(map.instance);
-                    setRoutePolyline(polyline);
-                }
-
                 return newPoints;
             });
         };
@@ -260,14 +318,76 @@ const PetWalk = React.memo(() => {
         return () => {
             window.kakao.maps.event.removeListener(map.instance, 'click', clickListener);
         };
-    }, [map?.instance, isDrawingMode, routePolyline]);
+    }, [map?.instance]);
 
-    // Load routes on tab change
+    // routePoints가 변경될 때마다 폴리라인 업데이트 (별도 useEffect)
+    useEffect(() => {
+        if (!map?.instance) return;
+
+        // 드로잉 모드가 아니면 폴리라인 제거만 하고 종료
+        if (!isDrawingMode) {
+            if (routePolyline) {
+                routePolyline.setMap(null);
+                setRoutePolyline(null);
+            }
+            return;
+        }
+
+        // 드로잉 모드일 때만 폴리라인 업데이트
+        // 기존 폴리라인 제거
+        if (routePolyline) {
+            routePolyline.setMap(null);
+        }
+
+        // 새 폴리라인 생성
+        if (routePoints.length >= 2) {
+            const polyline = new (window.kakao.maps as any).Polyline({
+                path: routePoints.map(p => new window.kakao.maps.LatLng(p.lat, p.lng)),
+                strokeWeight: 6,
+                strokeColor: '#3b82f6',
+                strokeOpacity: 0.9,
+                strokeStyle: 'solid'
+            });
+            polyline.setMap(map.instance);
+            setRoutePolyline(polyline);
+        } else {
+            setRoutePolyline(null);
+        }
+    }, [routePoints, map?.instance, isDrawingMode, routePolyline]);
+
+    // Handle tab change - cleanup and load
     useEffect(() => {
         if (activeTab === 'routes') {
+            // 산책로 탭으로 전환 - 장소 검색 마커 제거 및 산책로 로드
+            clearAllMarkers();
             loadSavedRoutes();
+        } else {
+            // 장소 검색 탭으로 전환 - 모든 산책로 관련 요소 제거
+
+            // 1. 드로잉 모드 종료
+            if (isDrawingMode) {
+                if (routePolyline) {
+                    routePolyline.setMap(null);
+                    setRoutePolyline(null);
+                }
+                routeMarkers.forEach(marker => marker.setMap(null));
+                setRouteMarkers([]);
+                setRoutePoints([]);
+                setIsDrawingMode(false);
+            }
+
+            // 2. 표시된 산책로 제거
+            hideDisplayedRoute();
+
+            // 3. 모달 닫기
+            if (showCreateModal) {
+                setShowCreateModal(false);
+                setRouteName('');
+                setRouteDescription('');
+            }
         }
-    }, [activeTab, loadSavedRoutes]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab]);
 
     // Radius change with debounce
     const handleRadiusChangeWithSearch = useCallback((radius: number) => {
@@ -283,6 +403,18 @@ const PetWalk = React.memo(() => {
             }, 600);
         }
     }, [selectedCategory, loading, handleRadiusChange, handleCategorySearch]);
+
+    // Relayout map when panel state changes
+    useEffect(() => {
+        if (map?.instance) {
+            // 패널 애니메이션 완료 후 지도 크기 재조정
+            const timer = setTimeout(() => {
+                map.instance.relayout();
+            }, 300); // transition duration과 동일하게
+
+            return () => clearTimeout(timer);
+        }
+    }, [isSearchPanelOpen, map?.instance]);
 
     // Zoom controls
     const zoomIn = useCallback(() => {
@@ -301,18 +433,64 @@ const PetWalk = React.memo(() => {
 
     // Toggle drawing mode
     const toggleDrawingMode = useCallback(() => {
+        // 드로잉 시작 시 로그인 체크
+        if (!isDrawingMode && !isLoggedIn()) {
+            setError?.('산책로를 만들려면 로그인이 필요합니다.');
+            return;
+        }
+
         if (isDrawingMode) {
+            // 드로잉 종료 - 그린 것들 제거
             if (routePolyline) {
                 routePolyline.setMap(null);
                 setRoutePolyline(null);
             }
-            // 마커들 제거
             routeMarkers.forEach(marker => marker.setMap(null));
             setRouteMarkers([]);
             setRoutePoints([]);
+        } else {
+            // 드로잉 시작 - 표시된 산책로 숨김
+            hideDisplayedRoute();
         }
         setIsDrawingMode(!isDrawingMode);
-    }, [isDrawingMode, routePolyline, routeMarkers]);
+    }, [isDrawingMode, routePolyline, routeMarkers, hideDisplayedRoute, isLoggedIn, setError]);
+
+    // Undo last point (마지막 지점 삭제)
+    const undoLastPoint = useCallback(() => {
+        if (routePoints.length === 0) return;
+
+        setRoutePoints(prev => {
+            const newPoints = prev.slice(0, -1);
+
+            // 마지막 마커 제거
+            if (routeMarkers.length > 0) {
+                const lastMarker = routeMarkers[routeMarkers.length - 1];
+                lastMarker.setMap(null);
+                setRouteMarkers(prevMarkers => prevMarkers.slice(0, -1));
+            }
+
+            // 폴리라인 다시 그리기
+            if (routePolyline) {
+                routePolyline.setMap(null);
+            }
+
+            if (newPoints.length >= 2 && map?.instance) {
+                const polyline = new (window.kakao.maps as any).Polyline({
+                    path: newPoints.map(p => new window.kakao.maps.LatLng(p.lat, p.lng)),
+                    strokeWeight: 6,
+                    strokeColor: '#3b82f6',
+                    strokeOpacity: 0.9,
+                    strokeStyle: 'solid'
+                });
+                polyline.setMap(map.instance);
+                setRoutePolyline(polyline);
+            } else {
+                setRoutePolyline(null);
+            }
+
+            return newPoints;
+        });
+    }, [routePoints, routeMarkers, routePolyline, map?.instance]);
 
     // Cancel route creation
     const cancelRouteCreation = useCallback(() => {
@@ -329,6 +507,83 @@ const PetWalk = React.memo(() => {
         setRouteName('');
         setRouteDescription('');
     }, [routePolyline, routeMarkers]);
+
+    // Display saved route on map
+    const displayRoute = useCallback((route: any) => {
+        if (!map?.instance) return;
+
+        // 이전에 표시된 산책로 제거
+        if (displayedRoutePolyline) {
+            displayedRoutePolyline.setMap(null);
+        }
+        displayedRouteMarkers.forEach(marker => marker.setMap(null));
+
+        // 새 산책로 표시
+        const coordinates = route.coordinates;
+        if (!coordinates || coordinates.length < 2) return;
+
+        // 폴리라인 생성 (녹색)
+        const polyline = new (window.kakao.maps as any).Polyline({
+            path: coordinates.map((p: any) => new window.kakao.maps.LatLng(p.lat, p.lng)),
+            strokeWeight: 6,
+            strokeColor: '#10b981',
+            strokeOpacity: 0.9,
+            strokeStyle: 'solid'
+        });
+        polyline.setMap(map.instance);
+        setDisplayedRoutePolyline(polyline);
+
+        // 마커들 생성
+        const markers: any[] = [];
+        coordinates.forEach((point: any, index: number) => {
+            const markerContent = `
+                <div style="
+                    width: 32px;
+                    height: 32px;
+                    background: #10b981;
+                    border: 3px solid white;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                    color: white;
+                    font-size: 14px;
+                    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+                ">
+                    ${index + 1}
+                </div>
+            `;
+
+            const customOverlay = new window.kakao.maps.CustomOverlay({
+                position: new window.kakao.maps.LatLng(point.lat, point.lng),
+                content: markerContent,
+                yAnchor: 0.5
+            });
+
+            customOverlay.setMap(map.instance);
+            markers.push(customOverlay);
+        });
+
+        setDisplayedRouteMarkers(markers);
+        setSelectedRoute(route);
+
+        // 지도를 산책로가 모두 보이도록 이동
+        const bounds = new window.kakao.maps.LatLngBounds();
+        coordinates.forEach((point: any) => {
+            bounds.extend(new window.kakao.maps.LatLng(point.lat, point.lng));
+        });
+        map.instance.setBounds(bounds);
+    }, [map?.instance, displayedRoutePolyline, displayedRouteMarkers]);
+
+    // Toggle route display
+    const toggleRouteDisplay = useCallback((route: any) => {
+        if (selectedRoute?.id === route.id) {
+            hideDisplayedRoute();
+        } else {
+            displayRoute(route);
+        }
+    }, [selectedRoute, hideDisplayedRoute, displayRoute]);
 
     return (
         <div className="relative h-screen pt-16 bg-gray-50 overflow-hidden">
@@ -372,7 +627,13 @@ const PetWalk = React.memo(() => {
                                     장소 검색
                                 </button>
                                 <button
-                                    onClick={() => setActiveTab('routes')}
+                                    onClick={() => {
+                                        if (!isLoggedIn()) {
+                                            setError?.('로그인이 필요합니다.');
+                                            return;
+                                        }
+                                        setActiveTab('routes');
+                                    }}
                                     className={`
                                         flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all
                                         ${activeTab === 'routes'
@@ -470,17 +731,52 @@ const PetWalk = React.memo(() => {
                                                 검색 결과 ({searchResults.documents.length})
                                             </h3>
                                             <div className="space-y-2.5">
-                                                {searchResults.documents.map((place, idx) => (
-                                                    <button
-                                                        key={idx}
-                                                        onClick={() => moveToLocation(parseFloat(place.y), parseFloat(place.x), place)}
-                                                        className="w-full text-left p-4 bg-white border border-gray-200 hover:border-blue-400 rounded-2xl transition-all hover:shadow-lg active:scale-[0.98] group"
-                                                    >
-                                                        <h4 className="font-bold text-gray-900 mb-1.5 group-hover:text-gray-900 text-sm">{place.place_name}</h4>
-                                                        <p className="text-xs text-gray-500 mb-1 font-medium">{place.category_name}</p>
-                                                        <p className="text-xs text-gray-400 leading-relaxed">{place.address_name}</p>
-                                                    </button>
-                                                ))}
+                                                {searchResults.documents.map((place, idx) => {
+                                                    const isSelected = selectedPlace?.place_name === place.place_name &&
+                                                                      selectedPlace?.x === place.x &&
+                                                                      selectedPlace?.y === place.y;
+
+                                                    return (
+                                                        <button
+                                                            key={idx}
+                                                            ref={isSelected ? selectedPlaceRef : null}
+                                                            onClick={() => moveToLocation(parseFloat(place.y), parseFloat(place.x), place)}
+                                                            className={`
+                                                                w-full text-left p-4 rounded-2xl transition-all active:scale-[0.98] group relative
+                                                                ${isSelected
+                                                                    ? 'bg-blue-50 border-2 border-blue-500 shadow-lg ring-2 ring-blue-200'
+                                                                    : 'bg-white border border-gray-200 hover:border-blue-400 hover:shadow-lg'
+                                                                }
+                                                            `}
+                                                        >
+                                                            {isSelected && (
+                                                                <div className="absolute top-3 right-3">
+                                                                    <div className="bg-blue-500 text-white rounded-full p-1">
+                                                                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                        </svg>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                            <h4 className={`font-bold mb-1.5 text-sm ${isSelected ? 'text-blue-700' : 'text-gray-900 group-hover:text-gray-900'}`}>
+                                                                {place.place_name}
+                                                            </h4>
+                                                            <p className={`text-xs mb-1 font-medium ${isSelected ? 'text-blue-600' : 'text-gray-500'}`}>
+                                                                {place.category_name}
+                                                            </p>
+                                                            <p className={`text-xs leading-relaxed ${isSelected ? 'text-blue-500' : 'text-gray-400'}`}>
+                                                                {place.address_name}
+                                                            </p>
+                                                            {place.distance && (
+                                                                <p className={`text-xs mt-2 font-semibold ${isSelected ? 'text-blue-600' : 'text-gray-500'}`}>
+                                                                    📍 {place.distance < 1000
+                                                                        ? `${place.distance}m`
+                                                                        : `${(parseFloat(place.distance) / 1000).toFixed(1)}km`}
+                                                                </p>
+                                                            )}
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     ) : searchResults ? (
@@ -492,75 +788,19 @@ const PetWalk = React.memo(() => {
                                     ) : null}
                                 </div>
                             ) : (
-                                <div className="p-6 space-y-4">
-                                    {/* Drawing Mode */}
-                                    {isDrawingMode ? (
-                                        <div className="p-4 bg-blue-50 border-2 border-blue-500 rounded-2xl space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <h3 className="font-bold text-blue-900 text-sm">경로 그리는 중</h3>
-                                                <span className="text-xs text-blue-600 font-bold px-2.5 py-1 bg-blue-100 rounded-full">{routePoints.length}개 지점</span>
-                                            </div>
-                                            <p className="text-sm text-blue-700 leading-relaxed">지도를 클릭하여 산책 경로를 그려보세요</p>
-                                            <div className="flex gap-2.5">
-                                                <button
-                                                    onClick={() => setShowCreateModal(true)}
-                                                    disabled={routePoints.length < 2}
-                                                    className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-md"
-                                                >
-                                                    <FaCheck className="w-3.5 h-3.5" /> 완료
-                                                </button>
-                                                <button
-                                                    onClick={cancelRouteCreation}
-                                                    className="flex-1 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2"
-                                                >
-                                                    <FaTimes className="w-3.5 h-3.5" /> 취소
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            onClick={toggleDrawingMode}
-                                            className="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl font-bold transition-all shadow-xl hover:shadow-2xl flex items-center justify-center gap-2.5 active:scale-[0.98]"
-                                        >
-                                            <FaPlus className="w-4 h-4" /> 새 산책로 만들기
-                                        </button>
-                                    )}
-
-                                    {/* Saved Routes */}
-                                    {loadingRoutes ? (
-                                        <div className="flex justify-center py-16">
-                                            <div className="animate-spin rounded-full h-10 w-10 border-3 border-blue-500 border-t-transparent"></div>
-                                        </div>
-                                    ) : savedRoutes.length > 0 ? (
-                                        <div className="space-y-2.5">
-                                            {savedRoutes.map((route) => (
-                                                <div key={route.id} className="p-4 bg-white border border-gray-200 rounded-2xl hover:shadow-lg transition-all group">
-                                                    <div className="flex items-start justify-between mb-2">
-                                                        <h4 className="font-bold text-gray-900 text-sm">{route.name}</h4>
-                                                        <button
-                                                            onClick={() => handleDeleteRoute(route.id)}
-                                                            className="text-gray-400 hover:text-red-600 transition-colors p-1 hover:bg-red-50 rounded-lg"
-                                                        >
-                                                            <FaTrash className="w-3.5 h-3.5" />
-                                                        </button>
-                                                    </div>
-                                                    {route.description && (
-                                                        <p className="text-xs text-gray-600 mb-2 leading-relaxed">{route.description}</p>
-                                                    )}
-                                                    <p className="text-xs text-gray-400 font-medium">
-                                                        {new Date(route.createdAt).toLocaleDateString('ko-KR')}
-                                                    </p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center py-16 text-center">
-                                            <div className="text-6xl mb-4">🐾</div>
-                                            <p className="text-gray-900 font-semibold mb-1.5">저장된 산책로가 없습니다</p>
-                                            <p className="text-sm text-gray-500">새 산책로를 만들어보세요</p>
-                                        </div>
-                                    )}
-                                </div>
+                                <RoutePanel
+                                    isDrawingMode={isDrawingMode}
+                                    routePoints={routePoints}
+                                    savedRoutes={savedRoutes}
+                                    loadingRoutes={loadingRoutes}
+                                    selectedRoute={selectedRoute}
+                                    onToggleDrawingMode={toggleDrawingMode}
+                                    onCompleteDrawing={() => setShowCreateModal(true)}
+                                    onCancelDrawing={cancelRouteCreation}
+                                    onUndoLastPoint={undoLastPoint}
+                                    onToggleRouteDisplay={toggleRouteDisplay}
+                                    onDeleteRoute={handleDeleteRoute}
+                                />
                             )}
                         </div>
                     </div>
@@ -658,65 +898,17 @@ const PetWalk = React.memo(() => {
                 </div>
             </div>
 
-            {/* Create Route Modal */}
-            {showCreateModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 border border-gray-100">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-6">산책로 저장</h2>
-
-                        <div className="space-y-5 mb-8">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
-                                    이름 <span className="text-red-600">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    value={routeName}
-                                    onChange={(e) => setRouteName(e.target.value)}
-                                    maxLength={50}
-                                    placeholder="예: 한강 산책로"
-                                    className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
-                                    설명
-                                </label>
-                                <textarea
-                                    value={routeDescription}
-                                    onChange={(e) => setRouteDescription(e.target.value)}
-                                    maxLength={200}
-                                    rows={3}
-                                    placeholder="산책로에 대한 간단한 설명을 입력하세요"
-                                    className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-sm shadow-sm"
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-2.5 text-sm text-gray-600 bg-gray-50 p-3.5 rounded-2xl border border-gray-100">
-                                <FaMapMarkerAlt className="text-blue-500" />
-                                <span className="font-semibold">{routePoints.length}개 지점</span>
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={cancelRouteCreation}
-                                className="flex-1 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-2xl font-semibold text-sm transition-all active:scale-95"
-                            >
-                                취소
-                            </button>
-                            <button
-                                onClick={handleSaveRoute}
-                                disabled={saving || !routeName.trim()}
-                                className="flex-1 py-3.5 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-2xl font-semibold text-sm transition-all shadow-lg active:scale-95"
-                            >
-                                {saving ? '저장 중...' : '저장'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <RouteModal
+                show={showCreateModal}
+                routeName={routeName}
+                routeDescription={routeDescription}
+                routePoints={routePoints}
+                saving={saving}
+                onRouteName={setRouteName}
+                onRouteDescription={setRouteDescription}
+                onSave={handleSaveRoute}
+                onCancel={cancelRouteCreation}
+            />
 
             {/* WebView Modal */}
             {showWebView && (

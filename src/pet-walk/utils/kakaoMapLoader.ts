@@ -84,26 +84,20 @@ class KakaoMapLoader {
             });
 
             script.src = `https://dapi.kakao.com/v2/maps/sdk.js?${params.toString()}`;
-            console.log('Kakao Maps SDK 로딩 시작:', script.src);
 
             // 최대 대기 시간 설정
             const timeoutId = setTimeout(() => {
-                console.error('Kakao Maps SDK 로드 타임아웃');
                 this.isLoading = false;
                 reject(new Error('Kakao Maps API 로드 타임아웃 (30초)'));
             }, 30000);
 
-            // 로드 완룈 핸들러 (개선된 버전)
+            // 로드 완료 핸들러
             script.onload = () => {
-                console.log('Kakao Maps SDK 스크립트 로드 완료');
-
                 // window.kakao 객체 존재 확인
                 if (window.kakao?.maps?.load) {
-                    console.log('Kakao Maps API 초기화 시작');
                     try {
                         // 수동 로드로 document.write 완전 방지
                         window.kakao.maps.load(() => {
-                            console.log('Kakao Maps API 초기화 완료');
                             clearTimeout(timeoutId);
                             this.isLoaded = true;
                             this.isLoading = false;
@@ -116,15 +110,13 @@ class KakaoMapLoader {
                         reject(error);
                     }
                 } else {
-                    console.error('Kakao Maps API 객체를 찾을 수 없음:', window.kakao);
                     this.isLoading = false;
                     reject(new Error('Kakao Maps API를 로드했지만 객체를 찾을 수 없습니다.'));
                 }
             };
 
-            // 에러 핸들러 (더 상세한 로깅)
+            // 에러 핸들러
             script.onerror = (error) => {
-                console.error('Kakao Maps SDK 로드 실패:', error);
                 clearTimeout(timeoutId);
                 this.isLoading = false;
                 reject(new Error(`Kakao Maps API 로드에 실패했습니다: ${error}`));

@@ -17,6 +17,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => {
+    return localStorage.getItem('rememberMe') === 'true';
+  });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -35,26 +38,24 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     }
 
     try {
-      await login(formData);
+      await login(formData, rememberMe);
+
+      // 로그인 상태 유지 설정 저장 (사용자명만 저장)
+      if (rememberMe) {
+        localStorage.setItem('rememberMe', 'true');
+        localStorage.setItem('savedUsername', formData.username);
+      } else {
+        localStorage.removeItem('rememberMe');
+        localStorage.removeItem('savedUsername');
+      }
+
       setSuccess('로그인이 완료되었습니다!');
       setTimeout(() => {
         onSuccess?.();
       }, 1000);
     } catch (err: any) {
-
-      // 백엔드 ErrorResponse 형식에 맞춘 에러 처리
-      let errorMessage = '로그인에 실패했습니다.';
-
-      if (err?.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err?.response?.status === 401) {
-        errorMessage = '아이디 또는 비밀번호가 올바르지 않습니다.';
-      } else if (err?.response?.status >= 500) {
-        errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-      } else if (err?.message) {
-        errorMessage = err.message;
-      }
-
+      // koreanMessage가 이미 인터셉터에서 추가됨
+      const errorMessage = err?.koreanMessage || err?.response?.data?.message || '로그인에 실패했습니다.';
       setError(errorMessage);
     }
   };
@@ -87,13 +88,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
           try {
             // accessToken으로 백엔드 카카오 로그인 API 호출
             await kakaoLogin(authObj.access_token);
-            console.log('Kakao login completed successfully'); // 디버깅용
             setSuccess('카카오 로그인이 완료되었습니다!');
             setTimeout(() => {
               onSuccess?.();
             }, 1000);
           } catch (err: unknown) {
-            console.error('Kakao login error:', err); // 디버깅용
+            console.error('Kakao login error:', err);
             setError('카카오 로그인 처리 중 오류가 발생했습니다.');
           }
         },
@@ -166,6 +166,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </button>
           </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              disabled={isLoading}
+            />
+            <span className="text-sm text-gray-600">로그인 상태 유지</span>
+          </label>
         </div>
 
         {error && (

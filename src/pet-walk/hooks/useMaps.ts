@@ -54,7 +54,6 @@ export const useMaps = () => {
     }
 
     const kakaoMapsLoaded = kakaoMapsResult.isLoaded || false;
-    const kakaoMapsLoading = kakaoMapsResult.isLoading || false;
     const kakaoMapsError = kakaoMapsResult.error || null;
 
     const [map, setMap] = useState<kakao.maps.Map | null>(null);
@@ -66,7 +65,6 @@ export const useMaps = () => {
     const [searchMarkers, setSearchMarkers] = useState<kakao.maps.Marker[]>([]);
     const [currentInfoWindow, setCurrentInfoWindow] = useState<kakao.maps.InfoWindow | null>(null);
     const [selectedPlace, setSelectedPlace] = useState<any>(null);
-    const [selectedPlacePosition, setSelectedPlacePosition] = useState<{x: number, y: number} | null>(null);
     const [showWebView, setShowWebView] = useState<boolean>(false);
     const [webViewUrl, setWebViewUrl] = useState<string>('');
 
@@ -74,10 +72,12 @@ export const useMaps = () => {
     const webViewStateRef = useRef({ showWebView: false, webViewUrl: '' });
     const webViewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // WebView 상태 디버깅 및 ref 동기화
+    // 선택된 마커 추적을 위한 ref
+    const selectedMarkerRef = useRef<{ marker: kakao.maps.Marker, originalColor: 'red' | 'blue' } | null>(null);
+
+    // WebView 상태 ref 동기화
     useEffect(() => {
         webViewStateRef.current = { showWebView, webViewUrl };
-        console.log('🔍 WebView 상태 변경:', { showWebView, webViewUrl });
     }, [showWebView, webViewUrl]);
     const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
     const [locationLoading, setLocationLoading] = useState<boolean>(false);
@@ -95,7 +95,7 @@ export const useMaps = () => {
         }
     }, [kakaoMapsError]);
 
-    // 마커 관리 함수들 (개선된 버전)
+    // 마커 관리 함수들
     const clearAllMarkers = useCallback(() => {
         // 검색 결과 마커들 완전 제거
         searchMarkers.forEach(marker => {
@@ -118,7 +118,8 @@ export const useMaps = () => {
         // 선택된 장소 정보도 초기화
         setSelectedPlace(null);
 
-        console.log('모든 마커 및 선택 상태 초기화 완료');
+        // 선택된 마커 ref 초기화
+        selectedMarkerRef.current = null;
     }, [searchMarkers, currentMarker, currentInfoWindow]);
 
     // 안전한 커스텀 마커 생성 (원형 핀 스타일, 터치 친화적)
@@ -176,17 +177,93 @@ export const useMaps = () => {
         return new window.kakao.maps.MarkerImage(encodedSvg, imageSize, imageOption);
     }, [kakaoMapsLoaded]);
 
+    // 거리 계산 함수 (키로미터 단위)
+    const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+        const R = 6371; // 지구 반지름 (km)
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    };
+
+    // 통일된 장소 선택 함수 (검색 결과 클릭, 마커 클릭 모두 사용)
+    const selectPlace = useCallback((placeData: any, markerToSelect?: kakao.maps.Marker, markerOriginalColor?: 'red' | 'blue') => {
+        if (!map) return;
+
+        const lat = parseFloat(placeData.y);
+        const lng = parseFloat(placeData.x);
+
+        // 기존 인포윈도우 닫기
+        if (currentInfoWindow) {
+            currentInfoWindow.close();
+            setCurrentInfoWindow(null);
+        }
+
+        // 1. 이전 선택된 마커 색상 복원
+        if (selectedMarkerRef.current) {
+            const { marker: prevMarker, originalColor } = selectedMarkerRef.current;
+            const originalImage = createCustomMarkerImage(originalColor);
+            prevMarker.setImage(originalImage);
+            prevMarker.setZIndex(50); // 모든 마커의 기본 z-index는 50
+        }
+
+        // 2. placeData에 distance가 없으면 계산
+        let placeWithDistance = placeData;
+        if (!placeData.distance) {
+            const currentCenter = map.getCenter();
+            const distance = calculateDistance(
+                currentCenter.getLat(),
+                currentCenter.getLng(),
+                lat,
+                lng
+            );
+            placeWithDistance = {
+                ...placeData,
+                distance: Math.round(distance * 1000)
+            };
+        }
+
+        // 3. 선택된 장소 정보 업데이트
+        setSelectedPlace(placeWithDistance);
+
+        // 4. 지도 이동 (줌 레벨 먼저 조정 후 이동)
+        const moveLatLng = new window.kakao.maps.LatLng(lat, lng);
+
+        // 줌 레벨이 3보다 크면 먼저 조정
+        if (map.getLevel() > 3) {
+            map.setLevel(3);
+        }
+
+        // setCenter로 즉시 이동 (panTo는 애니메이션이라 비동기 문제 발생 가능)
+        map.setCenter(moveLatLng);
+
+        // 5. 마커가 제공된 경우 선택 상태로 변경
+        if (markerToSelect) {
+            const selectedImage = createCustomMarkerImage('red', true);
+            markerToSelect.setImage(selectedImage);
+            markerToSelect.setZIndex(200);
+            selectedMarkerRef.current = {
+                marker: markerToSelect,
+                originalColor: markerOriginalColor || 'blue'
+            };
+        }
+    }, [map, currentInfoWindow, createCustomMarkerImage]);
+
     const addSearchResultMarkers = useCallback((places: any[]) => {
         if (!kakaoMapsLoaded || !map || !window.kakao?.maps) return;
-
-        console.log(`마커 추가 시작: ${places.length}개 장소`);
 
         // 기존 마커들 완전 제거
         searchMarkers.forEach(marker => marker.setMap(null));
 
+        // 선택된 마커 ref 초기화 (새로운 검색이므로)
+        selectedMarkerRef.current = null;
+
         if (places.length === 0) {
             setSearchMarkers([]);
-            console.log('검색 결과 없음 - 모든 마커 제거');
             return;
         }
 
@@ -195,7 +272,8 @@ export const useMaps = () => {
 
         places.forEach((place, index) => {
             const position = new window.kakao.maps.LatLng(parseFloat(place.y), parseFloat(place.x));
-            const markerImage = createCustomMarkerImage(index === 0 ? 'red' : 'blue');
+            // 모든 마커를 파란색으로 통일 (선택 시에만 빨간색으로 변경)
+            const markerImage = createCustomMarkerImage('blue');
 
             const marker = new window.kakao.maps.Marker({
                 position,
@@ -204,48 +282,17 @@ export const useMaps = () => {
                 title: place.place_name
             });
 
-            // 마커 클릭 이벤트 (개선된 버전 - 에러 처리 및 UX 향상)
+            // 마커 클릭 이벤트 - 통일된 selectPlace 함수 사용
             const handleMarkerClick = () => {
-                console.log('마커 클릭됨:', place.place_name);
-
-                // 선택 시 시각적 피드백을 위해 마커 위치 정보 저장
-                setSelectedPlacePosition(null);
-
-                // 거리 계산 (지도 중심 기준)
-                const mapCenter = map.getCenter();
-                const distance = calculateDistance(
-                    mapCenter.getLat(),
-                    mapCenter.getLng(),
-                    parseFloat(place.y),
-                    parseFloat(place.x)
-                );
-
-                // 거리 정보 추가
-                const placeWithDistance = {
-                    ...place,
-                    distance: Math.round(distance * 1000) // 미터 단위
-                };
-
-                setSelectedPlace(placeWithDistance);
-
-                // 지도를 부드럽게 이동 (약간의 오프셋으로 마커가 중앙에 오도록)
-                const moveLatLng = new window.kakao.maps.LatLng(parseFloat(place.y), parseFloat(place.x));
-                map.panTo(moveLatLng);
-
-                // 선택된 마커 강조 효과
-                const currentImage = marker.getImage();
-                if (currentImage) {
-                    // 선택된 마커는 빨간색으로 변경
-                    const selectedImage = createCustomMarkerImage('red');
-                    marker.setImage(selectedImage);
-                }
+                // 모든 마커의 원래 색상은 파란색
+                selectPlace(place, marker, 'blue');
             };
 
             // 터치/클릭 이벤트 모두 처리
             window.kakao.maps.event.addListener(marker, 'click', handleMarkerClick);
 
-            // 마커에 z-index 설정 (선택 시 상위로)
-            marker.setZIndex(index === 0 ? 100 : 50);
+            // 마커에 z-index 설정
+            marker.setZIndex(50);
 
             newMarkers.push(marker);
             bounds.extend(position);
@@ -266,11 +313,11 @@ export const useMaps = () => {
                 map.setBounds(bounds);
             }
         }, 300);
-
-        console.log(`마커 추가 완료: ${newMarkers.length}개`);
+        // selectPlace는 dependency에서 제외 (순환 참조 방지)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [kakaoMapsLoaded, map, createCustomMarkerImage, searchMarkers]);
 
-    // 키워드 검색 (개선된 버전)
+    // 키워드 검색
     const handleSearch = async (keyword?: string) => {
         const searchTerm = keyword || searchKeyword;
         if (!searchTerm.trim()) {
@@ -278,30 +325,39 @@ export const useMaps = () => {
             return;
         }
 
-        console.log(`키워드 검색 시작: ${searchTerm}`);
-
         setLoading(true);
         setError(null);
         setSelectedPlace(null);
 
         try {
             const response = await api.searchPlaces(searchTerm, "KEYWORD");
-            setSearchResults(response);
 
-            // 결과에 따라 마커 처리
-            addSearchResultMarkers(response.documents || []);
+            // 각 장소에 거리 정보 추가 (지도 중심 기준)
+            const documentsWithDistance = map ? (response.documents || []).map(place => {
+                const center = map.getCenter();
+                const distance = calculateDistance(
+                    center.getLat(),
+                    center.getLng(),
+                    parseFloat(place.y),
+                    parseFloat(place.x)
+                );
+                return {
+                    ...place,
+                    distance: Math.round(distance * 1000) // 미터 단위
+                };
+            }) : response.documents || [];
 
-            console.log(`키워드 검색 완료: ${searchTerm}, 결과: ${response.documents?.length || 0}개`);
-        } catch (error) {
-            console.error(`키워드 검색 실패: ${searchTerm}`, error);
+            const responseWithDistance = {
+                ...response,
+                documents: documentsWithDistance
+            };
 
-            const errorMessage = error instanceof Error
-                ? error.message
-                : '검색 중 오류가 발생했습니다.';
-            setError(errorMessage);
+            setSearchResults(responseWithDistance);
+            addSearchResultMarkers(documentsWithDistance);
+        } catch (error: any) {
+            console.error('키워드 검색 실패:', error);
+            setError(error?.koreanMessage || '검색 중 오류가 발생했습니다.');
             setSearchResults(null);
-
-            // 에러 시에도 기존 마커 정리
             addSearchResultMarkers([]);
         } finally {
             setLoading(false);
@@ -314,57 +370,24 @@ export const useMaps = () => {
         }
     };
 
-    // 지도의 특정 위치로 이동 (간소화된 버전 - 인포윈도우 제거)
+    // 지도의 특정 위치로 이동 (하위 호환성을 위해 유지, selectPlace를 내부적으로 호출)
     const moveToLocation = (lat: number, lng: number, placeData: any) => {
-        if (!map) return;
+        // searchMarkers에서 해당 위치의 마커 찾기
+        const targetMarker = searchMarkers.find(marker => {
+            const pos = marker.getPosition();
+            return Math.abs(pos.getLat() - lat) < 0.0001 && Math.abs(pos.getLng() - lng) < 0.0001;
+        });
 
-        // 기존 인포윈도우 닫기 (혹시 남아있다면)
-        if (currentInfoWindow) {
-            currentInfoWindow.close();
-            setCurrentInfoWindow(null);
-        }
-
-        // 거리 계산 (지도 중심 기준)
-        const mapCenter = map.getCenter();
-        const distance = calculateDistance(
-            mapCenter.getLat(),
-            mapCenter.getLng(),
-            lat,
-            lng
-        );
-
-        // 거리 정보 추가
-        const placeWithDistance = {
-            ...placeData,
-            distance: Math.round(distance * 1000) // 미터 단위
-        };
-
-        // 선택된 장소 정보 업데이트 (우리 모달만 표시)
-        setSelectedPlace(placeWithDistance);
-
-        // 지도를 부드럽게 이동
-        const moveLatLng = new window.kakao.maps.LatLng(lat, lng);
-        map.panTo(moveLatLng);
-
-        // 줌 레벨 조정
-        if (map.getLevel() > 3) {
-            map.setLevel(3);
-        }
+        // 모든 마커의 원래 색상은 파란색으로 통일
+        selectPlace(placeData, targetMarker, 'blue');
     };
 
-    // 웹뷰 관련 함수들 (StrictMode 대응 강화)
+    // 웹뷰 관련 함수들
     const openWebView = useCallback((url: string) => {
-        console.log('🔗 WebView 열기 요청:', url);
-        console.log('현재 WebView 상태:', webViewStateRef.current);
-
-        if (!url || !url.trim()) {
-            console.error('⚠️ WebView URL이 비어있습니다.');
-            return;
-        }
+        if (!url || !url.trim()) return;
 
         // 이미 같은 URL이 열려있으면 무시
         if (webViewStateRef.current.showWebView && webViewStateRef.current.webViewUrl === url) {
-            console.log('⏭️ 같은 URL이 이미 열려있습니다. 무시.');
             return;
         }
 
@@ -374,23 +397,12 @@ export const useMaps = () => {
             webViewTimeoutRef.current = null;
         }
 
-        console.log('🚀 WebView 상태 업데이트 시작...');
-
-        // 즉시 상태 업데이트 (StrictMode에서도 안정적)
         setWebViewUrl(url);
         setShowWebView(true);
-
-        console.log('✅ WebView 모달 열기 완료');
     }, []);
 
     const closeWebView = useCallback(() => {
-        console.log('❌ WebView 닫기 요청');
-        console.log('현재 WebView 상태:', webViewStateRef.current);
-
-        if (!webViewStateRef.current.showWebView) {
-            console.log('⏭️ WebView가 이미 닫혀있습니다. 무시.');
-            return;
-        }
+        if (!webViewStateRef.current.showWebView) return;
 
         // 기존 타이머 정리
         if (webViewTimeoutRef.current) {
@@ -398,19 +410,16 @@ export const useMaps = () => {
             webViewTimeoutRef.current = null;
         }
 
-        console.log('🚀 WebView 상태 초기화 시작...');
         setShowWebView(false);
 
         // 모달 애니메이션 후 URL 정리
         webViewTimeoutRef.current = setTimeout(() => {
             setWebViewUrl('');
-            console.log('✅ WebView 상태 초기화 완료');
         }, 200);
     }, []);
 
-    // 현재 위치 가져오기 (개선된 버전)
+    // 현재 위치 가져오기
     const getCurrentLocation = () => {
-        console.log('현재 위치 요청 시작');
         setLocationLoading(true);
         setError(null);
 
@@ -424,7 +433,6 @@ export const useMaps = () => {
             (position) => {
                 const { latitude, longitude } = position.coords;
                 const location = { lat: latitude, lng: longitude };
-                console.log(`현재 위치 획득: (${latitude.toFixed(6)}, ${longitude.toFixed(6)})`);
                 setCurrentLocation(location);
 
                 if (map) {
@@ -542,8 +550,7 @@ export const useMaps = () => {
         }
 
         if (config.searchType === 'CATEGORY' && config.categoryCode) {
-            // 카테고리 코드 기반 검색 (더 정확하고 빠름)
-            console.log(`카테고리 코드 검색: ${category} (${config.categoryCode}) - ${config.description}`);
+            // 카테고리 코드 기반 검색
             return await api.searchPlaces(config.query, "CATEGORY", {
                 categoryGroupCode: config.categoryCode,
                 x: searchLng,
@@ -553,8 +560,7 @@ export const useMaps = () => {
                 sort: 'distance'
             });
         } else {
-            // 키워드 기반 검색 (단순 키워드)
-            console.log(`키워드 검색: ${category} (${config.query}) - ${config.description}`);
+            // 키워드 기반 검색
             return await api.searchPlaces(config.query, "KEYWORD", {
                 x: searchLng,
                 y: searchLat,
@@ -567,7 +573,7 @@ export const useMaps = () => {
 
     // GPS 기준 검색 함수 제거됨 (지도 중심 검색으로 통일)
 
-    // 지도 화면 중심 기준 검색 (개선된 버전)
+    // 지도 화면 중심 기준 검색
     const searchNearbyPlacesByMapCenter = async (category: string) => {
         if (!map) {
             setError('지도를 불러오는 중입니다.');
@@ -578,102 +584,44 @@ export const useMaps = () => {
         const centerLat = center.getLat();
         const centerLng = center.getLng();
 
-        console.log(`검색 시작: ${category}, 위치: (${centerLat.toFixed(4)}, ${centerLng.toFixed(4)})`);
-
         setLoading(true);
         setError(null);
-
-        // 검색 시작 전에 선택된 장소 정보 초기화
         setSelectedPlace(null);
 
         try {
             const response = await performOptimizedSearch(category, centerLat, centerLng);
-            setSearchResults(response);
 
-            // 결과에 따라 마커 처리 (빈 배열도 처리)
-            addSearchResultMarkers(response.documents || []);
+            // 각 장소에 거리 정보 추가
+            const documentsWithDistance = (response.documents || []).map(place => {
+                const distance = calculateDistance(
+                    centerLat,
+                    centerLng,
+                    parseFloat(place.y),
+                    parseFloat(place.x)
+                );
+                return {
+                    ...place,
+                    distance: Math.round(distance * 1000) // 미터 단위
+                };
+            });
 
-            console.log(`검색 완료: ${category}, 결과: ${response.documents?.length || 0}개`);
-        } catch (error) {
-            console.error(`검색 실패: ${category}`, error);
+            const responseWithDistance = {
+                ...response,
+                documents: documentsWithDistance
+            };
 
-            const errorMessage = error instanceof Error
-                ? error.message
-                : '지도 중심 기준 검색 중 오류가 발생했습니다.';
-            setError(errorMessage);
+            setSearchResults(responseWithDistance);
+            addSearchResultMarkers(documentsWithDistance);
+        } catch (error: any) {
+            console.error('검색 실패:', error);
+            setError(error?.koreanMessage || '검색 중 오류가 발생했습니다.');
             setSearchResults(null);
-
-            // 에러 시에도 기존 마커 정리
             addSearchResultMarkers([]);
         } finally {
             setLoading(false);
         }
     };
 
-
-    // 실시간 지도 이동 기반 자동 검색
-    const handleMapDragEnd = async (selectedCategory: string) => {
-        if (!map || !selectedCategory) return;
-
-        const center = map.getCenter();
-        const centerLat = center.getLat();
-        const centerLng = center.getLng();
-
-        // 디바운싱을 위한 지연
-        setTimeout(async () => {
-            try {
-                const response = await performOptimizedSearch(selectedCategory, centerLat, centerLng);
-                setSearchResults(response);
-                console.log(`지도 이동 후 자동 검색 (${centerLat.toFixed(4)}, ${centerLng.toFixed(4)}):`, response);
-            } catch (error) {
-                console.error('자동 검색 실패:', error);
-            }
-        }, 500);
-    };
-
-    // 현재 위치로 지도 이동
-    const moveToCurrentLocation = () => {
-        if (!map || !currentLocation) {
-            getCurrentLocation();
-            return;
-        }
-
-        // 기존 마커 제거
-        if (currentMarker) {
-            currentMarker.setMap(null);
-        }
-
-        // 현재 위치로 지도 이동
-        const moveLatLng = new window.kakao.maps.LatLng(currentLocation.lat, currentLocation.lng);
-        map.setCenter(moveLatLng);
-        map.setLevel(4);
-
-        // 현재 위치 마커 생성
-        const marker = new window.kakao.maps.Marker({
-            position: moveLatLng,
-            map: map
-        });
-
-        // 현재 위치 인포윈도우
-        const infoWindowContent = `
-            <div style="padding: 10px; min-width: 200px; font-family: 'Malgun Gothic', sans-serif;">
-                <div style="font-weight: bold; font-size: 14px; color: #333; margin-bottom: 5px;">
-                    📍 현재 위치
-                </div>
-                <div style="font-size: 12px; color: #666;">
-                    위도: ${currentLocation.lat.toFixed(6)}<br>
-                    경도: ${currentLocation.lng.toFixed(6)}
-                </div>
-            </div>
-        `;
-
-        const infoWindow = new window.kakao.maps.InfoWindow({
-            content: infoWindowContent
-        });
-
-        infoWindow.open(map, marker);
-        setCurrentMarker(marker);
-    };
 
     // 반경 변경 처리
     const handleRadiusChange = (radius: number) => {
@@ -689,19 +637,6 @@ export const useMaps = () => {
         };
     }, []);
 
-    // 거리 계산 함수 (키로미터 단위)
-    const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
-        const R = 6371; // 지구 반지름 (km)
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLng = (lng2 - lng1) * Math.PI / 180;
-        const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLng / 2) * Math.sin(dLng / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
-    };
-
     return {
         map: {
             instance: map,
@@ -711,7 +646,6 @@ export const useMaps = () => {
         setSearchKeyword,
         searchResults,
         selectedPlace,
-        selectedPlacePosition,
         error,
         setError,
         loading,
@@ -720,7 +654,6 @@ export const useMaps = () => {
         searchRadius,
         searchMarkers,
         kakaoMapsLoaded,
-        kakaoMapsLoading,
         handleSearch,
         handleKeyUp,
         moveToLocation,
@@ -730,12 +663,8 @@ export const useMaps = () => {
         openWebView,
         closeWebView,
         getCurrentLocation,
-        // searchNearbyPlaces 제거됨 (GPS 기준 검색 제거)
         searchNearbyPlacesByMapCenter,
-        handleMapDragEnd,
-        moveToCurrentLocation,
         handleRadiusChange,
-        clearAllMarkers,
-        addSearchResultMarkers
+        clearAllMarkers
     }
 }
