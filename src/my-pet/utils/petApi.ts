@@ -63,12 +63,12 @@ export interface UpdatePetAccountResponse {
 // ==================== API 서비스 ====================
 
 export const petApi = {
-    // 펫 등록
+    // 펫 등록, POST /api/pet/profile
     registerPet: async (request: RegisterPetAccountRequest): Promise<RegisterPetAccountResponse> => {
         const formData = createPetFormData(request);
 
         const response = await axiosInstance.post<RegisterPetAccountResponse>(
-            '/petlifecycle/profile',
+            '/pet/profile',
             formData,
             {
                 headers: {
@@ -80,24 +80,24 @@ export const petApi = {
         return response.data;
     },
 
-    // 펫 목록 조회
+    // 펫 목록 조회, GET /api/pet/profile
     getAllPets: async (): Promise<PetAccountResponse[]> => {
-        const response = await axiosInstance.get<ListPetAccountResponse>('/petlifecycle/profile');
+        const response = await axiosInstance.get<ListPetAccountResponse>('/pet/profile');
         return response.data.pets;
     },
 
-    // 특정 펫 조회
+    // 특정 펫 조회, GET /api/pet/profile/{petId}
     getPet: async (petId: number): Promise<PetAccountResponse> => {
-        const response = await axiosInstance.get<PetAccountResponse>(`/petlifecycle/profile/${petId}`);
+        const response = await axiosInstance.get<PetAccountResponse>(`/pet/profile/${petId}`);
         return response.data;
     },
 
-    // 펫 정보 수정
+    // 펫 정보 수정, PUT /api/pet/profile/{petId}
     updatePet: async (petId: number, request: UpdatePetAccountRequest): Promise<UpdatePetAccountResponse> => {
         const formData = createPetFormData(request, true);
 
         const response = await axiosInstance.put<UpdatePetAccountResponse>(
-            `/petlifecycle/profile/${petId}`,
+            `/pet/profile/${petId}`,
             formData,
             {
                 headers: {
@@ -109,19 +109,19 @@ export const petApi = {
         return response.data;
     },
 
-    // 펫 삭제
+    // 펫 삭제, DELETE /api/pet/profile/{petId}
     deletePet: async (petId: number): Promise<string> => {
-        const response = await axiosInstance.delete<string>(`/petlifecycle/profile/${petId}`);
+        const response = await axiosInstance.delete<string>(`/pet/profile/${petId}`);  // 수정
         return response.data;
     },
 
-    // 프로필 이미지만 업로드
+    // 프로필 이미지만 업로드 (기존 API가 있다면)
     uploadProfileImage: async (petId: number, file: File): Promise<any> => {
         const formData = new FormData();
         formData.append('file', file);
 
         const response = await axiosInstance.post(
-            `/petlifecycle/profile/${petId}/profile-image`,
+            `/pet/profile/${petId}/profile-image`,
             formData,
             {
                 headers: {
@@ -133,13 +133,13 @@ export const petApi = {
         return response.data;
     },
 
-    // 등록증만 업로드
+    // 등록증만 업로드 (기존 API가 있다면)
     uploadRegistration: async (petId: number, file: File): Promise<any> => {
         const formData = new FormData();
         formData.append('file', file);
 
         const response = await axiosInstance.post(
-            `/petlifecycle/profile/${petId}/registration`,
+            `/pet/profile/${petId}/registration`,
             formData,
             {
                 headers: {
@@ -154,35 +154,17 @@ export const petApi = {
 
 // 품종(Breed) API
 export const breedApi = {
-    // 품종 목록 조회
+    // 품종 목록 조회, GET /api/pet/breed?species=...
     getBreeds: async (species?: Species): Promise<any[]> => {
-        const params = species ? { species } : {};
-        const response = await axiosInstance.get('/breeds', { params });
-        return response.data;
+        const response = await axiosInstance.get('/admin/pet/breed/dropdown', { params: {species} });  // 수정
+        if (response.data && Array.isArray(response.data.breedList)) {
+            return response.data.breedList;
+        }
+
+        return [];
     },
 };
 
-// 인증 API
-export const authApi = {
-    // 로그인
-    login: async (email: string, password: string): Promise<{ accessToken: string; refreshToken: string }> => {
-        const response = await axiosInstance.post('/auth/login', { email, password });
-        return response.data;
-    },
-
-    // 로그아웃
-    logout: async (): Promise<void> => {
-        await axiosInstance.post('/auth/logout');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-    },
-
-    // 토큰 갱신
-    refreshToken: async (refreshToken: string): Promise<{ accessToken: string }> => {
-        const response = await axiosInstance.post('/auth/refresh', { refreshToken });
-        return response.data;
-    },
-};
 
 // ==================== 유틸리티 함수 ====================
 

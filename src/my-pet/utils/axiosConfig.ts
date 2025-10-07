@@ -3,7 +3,8 @@ import type { AxiosInstance, InternalAxiosRequestConfig, AxiosError } from 'axio
 import { setupResponseInterceptor } from '../../shared/utils/axiosInterceptors';
 
 // API 기본 URL 설정
-const BASE_URL = '/api/pet';
+const PETLIFECYCLE_API_BASE_URL = import.meta.env.VITE_PETLIFECYCLE_API_BASE_URL || 'http://localhost:8003';
+const BASE_URL = '/api';
 
 // 개발 환경에서 사용할 테스트 토큰 (프로덕션에서는 절대 사용 금지!)
 const USE_TEST_TOKEN = import.meta.env.VITE_USE_TEST_TOKEN === 'true';
