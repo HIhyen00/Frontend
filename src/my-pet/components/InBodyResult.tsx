@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Pet, InBodyReport } from '../types/types';
 import RadarChart from './RadarChart.tsx';
+import AiChat from './AiChat.tsx'; // AI 채팅 컴포넌트 import
 
 interface InBodyResultProps {
     pet: Pet;
@@ -126,6 +127,9 @@ const InBodyResult: React.FC<InBodyResultProps> = ({ result, onBack }) => {
                     </div>
                 </div>
             </div>
+
+            {/* AI Chat Section */}
+            <AiChat reportId={result.id} />
 
             {/* Premium Upsell & Back Button */}
             <div className="mt-10 text-center">

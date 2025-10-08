@@ -24,11 +24,11 @@ export default defineConfig({
                 rewrite: (path) => path
             },
             // My-Pet API routes
-            '/api/pet': {
-                target: 'http://localhost:8003',
-                changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/api\/pet/, '')
-            },
+            '/api/pets': { target: 'http://localhost:8003', changeOrigin: true, secure: false },
+            '/api/missions': { target: 'http://localhost:8003', changeOrigin: true, secure: false },
+            '/api/users': { target: 'http://localhost:8003', changeOrigin: true, secure: false },
+            '/api/health-reports': { target: 'http://localhost:8003', changeOrigin: true, secure: false },
+
             // Default fallback for any other /api routes
             '/api': {
                 target: 'http://localhost:8002',
