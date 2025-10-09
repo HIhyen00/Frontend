@@ -5,7 +5,7 @@ import type {Pet} from "../../types/types.ts";
 import MedicalRecordTab from "../../components/MedicalRecordTab.tsx";
 import VaccinationHistoryTab from "../../components/VaccinationHistoryTab.tsx";
 
-const HealthReportPage: React.FC = () => {
+const MedicalRecordPage: React.FC = () => {
     const navigate = useNavigate();
     const { petId } = useParams<{ petId: string }>();
 
@@ -88,4 +88,4 @@ const HealthReportPage: React.FC = () => {
     );
 };
 
-export default HealthReportPage;
+export default MedicalRecordPage;

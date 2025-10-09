@@ -5,7 +5,7 @@ import PetModal from '../../components/PetModal.tsx';
 import AlertNotification from '../../../shared/components/AlertNotification.tsx';
 import ConfirmModal from '../../components/ConfirmModel.tsx';
 import { getDefaultImageUrl } from '../../utils/petUtils.ts';
-import { petApi, convertPetToRegisterRequest, convertResponseToPet, handleApiError } from '../../utils/Api.ts';
+import { petApi, convertPetToRegisterRequest, convertResponseToPet, handleApiError } from '../../utils/petApi.ts';
 
 // PetModal에서 전달하는 데이터 타입
 interface PetFormData {

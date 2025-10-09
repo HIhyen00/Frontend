@@ -1,6 +1,6 @@
 import { useState, useEffect, type ChangeEvent, useRef } from "react";
 import type { Pet } from "../types/types.ts";
-import { breedApi, type Species } from "../utils/Api.ts";
+import { breedApi, type Species } from "../utils/petApi.ts";
 
 interface PetFormData {
     id?: number;
@@ -73,12 +73,20 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                 try {
                     const species: Species = type === 'dog' ? 'DOG' : 'CAT';
                     const breeds = await breedApi.getBreeds(species);
-                    setBreedList(breeds);
+                    if (Array.isArray(breeds)) {
+                        setBreedList(breeds);
+                    } else {
+                        console.error('품종 데이터가 배열이 아닙니다:', breeds);
+                    }
                 } catch (error) {
                     console.error('품종 목록 조회 실패:', error);
+                    setBreedList([]);
                 } finally {
                     setIsLoadingBreeds(false);
                 }
+            } else {
+                console.log('type이 other이므로 품종 조회 스킵');
+                setBreedList([]);
             }
         };
         fetchBreeds();
@@ -436,11 +444,13 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                                         <option value="">
                                             {isLoadingBreeds ? '품종 불러오는 중...' : '주품종을 선택해주세요'}
                                         </option>
-                                        {breedList.map((breed) => (
-                                            <option key={breed.id} value={breed.id}>
-                                                {breed.name}
-                                            </option>
-                                        ))}
+                                        {(() => {
+                                            return Array.isArray(breedList) && breedList.map((breed) => (
+                                                <option key={breed.id} value={breed.id}>
+                                                    {breed.name}
+                                                </option>
+                                            ));
+                                        })()}
                                         <option value="직접입력">직접입력</option>
                                     </select>
 
@@ -469,7 +479,7 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition appearance-none bg-white"
                                 >
                                     <option value="">서브품종 선택 (선택사항)</option>
-                                    {getAvailableSubBreeds().map((breed) => (
+                                    {Array.isArray(breedList) && getAvailableSubBreeds().map((breed) => (
                                         <option key={breed.id} value={breed.id}>
                                             {breed.name}
                                         </option>
