@@ -1,17 +1,22 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import type { Pet, WeightRecord, HealthNote } from '../types/types.ts';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { apiClient } from '../../pet-walk/utils/axiosConfig';
 
 interface WeightLogTabProps {
     petData: Pet;
-    onUpdate: (updatedPet: Pet) => void;
+    onUpdate?: (updatedPet: Pet) => void;
 }
 
 const getToday = (): string => new Date().toISOString().slice(0, 10);
 
-const WeightLogTab: React.FC<WeightLogTabProps> = ({ petData, onUpdate }) => {
-    // 2. ⭐️ 상태 변수들을 새로운 설계도에 맞게 전부 바꿨어.
-    //    (note, condition -> mood, poop, pee, symptoms)
+const WeightLogTab: React.FC<WeightLogTabProps> = ({ petData }) => {
+    // API로부터 받은 데이터 상태
+    const [weightRecords, setWeightRecords] = useState<WeightRecord[]>([]);
+    const [healthNotes, setHealthNotes] = useState<HealthNote[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // 입력 폼 상태
     const [date, setDate] = useState<string>(getToday());
     const [weigh, setWeigh] = useState<string>('');
     const [symptoms, setSymptoms] = useState<string>('');
@@ -19,46 +24,64 @@ const WeightLogTab: React.FC<WeightLogTabProps> = ({ petData, onUpdate }) => {
     const [poop, setPoop] = useState<'good' | 'normal' | 'bad'>('normal');
     const [pee, setPee] = useState<'good' | 'normal' | 'bad'>('normal');
 
-    // 그래프용 데이터 정렬
-    const sortedWeightData = useMemo(() => {
-        return [...(petData.weightRecords || [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    }, [petData.weightRecords]);
+    const fetchData = useCallback(async () => {
+        if (!petData.id) return;
+        setIsLoading(true);
+        try {
+            const [weights, notes] = await Promise.all([
+                apiClient.get<WeightRecord[]>(`/pets/${petData.id}/weights`),
+                apiClient.get<HealthNote[]>(`/pets/${petData.id}/health-notes`)
+            ]);
+            setWeightRecords(weights);
+            setHealthNotes(notes);
+        } catch (error) {
+            console.error("체중 및 건강 기록을 불러오는데 실패했습니다.", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [petData.id]);
 
-    const handleAddWeightRecord = () => {
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    const sortedWeightData = useMemo(() => {
+        return [...weightRecords].sort((a, b) => new Date(a.recordDate).getTime() - new Date(b.recordDate).getTime());
+    }, [weightRecords]);
+
+    const handleAddWeightRecord = async () => {
         const weighValue = parseFloat(weigh);
         if (!weighValue || weighValue <= 0) {
             alert('올바른 체중을 입력해주세요.');
             return;
         }
-        const newRecord: WeightRecord = { id: Date.now(), date: date, weigh: weighValue };
-        const updatedRecords = [...(petData.weightRecords || []), newRecord];
-        onUpdate({ ...petData, weightRecords: updatedRecords });
-        setWeigh('');
+        try {
+            await apiClient.post(`/pets/${petData.id}/weights`, { weight: weighValue, recordDate: date });
+            setWeigh('');
+            fetchData(); // 데이터 새로고침
+        } catch (error) {
+            console.error("체중 기록 추가에 실패했습니다.", error);
+        }
     };
 
-    // 3. ⭐️ 건강 메모 저장 로직도 새로운 데이터 구조에 맞게 완벽하게 수정했어.
-    const handleAddHealthNote = () => {
+    const handleAddHealthNote = async () => {
         if (!symptoms.trim()) {
             alert('특이사항을 입력해주세요. (없으면 "없음"이라고 적어주세요)');
             return;
         }
-        const newNote: HealthNote = {
-            id: Date.now(),
-            date: date,
-            mood,
-            poop,
-            pee,
-            symptoms: symptoms.trim(),
-        };
-        const updatedNotes = [...(petData.healthNotes || []), newNote];
-        onUpdate({ ...petData, healthNotes: updatedNotes });
-        setSymptoms('');
-        setMood('normal');
-        setPoop('normal');
-        setPee('normal');
+        const newNote = { recordDate: date, mood, poop, pee, symptoms: symptoms.trim() };
+        try {
+            await apiClient.post(`/pets/${petData.id}/health-notes`, newNote);
+            setSymptoms('');
+            setMood('normal');
+            setPoop('normal');
+            setPee('normal');
+            fetchData(); // 데이터 새로고침
+        } catch (error) {
+            console.error("건강 메모 추가에 실패했습니다.", error);
+        }
     };
 
-    // 아이콘과 스타일을 관리하는 객체
     const conditionStyles = {
         good: { icon: 'fa-smile-beam', color: 'text-green-500', label: '좋음' },
         normal: { icon: 'fa-meh', color: 'text-blue-500', label: '보통' },
@@ -68,10 +91,11 @@ const WeightLogTab: React.FC<WeightLogTabProps> = ({ petData, onUpdate }) => {
 
     return (
         <div className="bg-white rounded-2xl shadow-lg p-6 animate-fade-in">
+             {isLoading ? (
+                <div className="flex justify-center items-center h-96">로딩 중...</div>
+            ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* 왼쪽: 기록 입력 영역 */}
                 <div className="space-y-6">
-                    {/* 체중 기록 섹션 */}
                     <div>
                         <h3 className="text-xl font-bold text-gray-800 mb-4">체중 기록하기</h3>
                         <div className="p-4 bg-gray-50 rounded-lg space-y-3">
@@ -85,7 +109,6 @@ const WeightLogTab: React.FC<WeightLogTabProps> = ({ petData, onUpdate }) => {
                         </div>
                     </div>
 
-                    {/* 건강 메모 섹션 */}
                     <div>
                         <h3 className="text-xl font-bold text-gray-800 mb-4">건강 상태 기록</h3>
                         <div className="p-4 bg-gray-50 rounded-lg space-y-4">
@@ -122,7 +145,6 @@ const WeightLogTab: React.FC<WeightLogTabProps> = ({ petData, onUpdate }) => {
                     </div>
                 </div>
 
-                {/* 오른쪽: 그래프 및 기록 목록 */}
                 <div className="space-y-6">
                     <div>
                         <h3 className="text-xl font-bold text-gray-800 mb-4">체중 변화 그래프</h3>
@@ -131,28 +153,27 @@ const WeightLogTab: React.FC<WeightLogTabProps> = ({ petData, onUpdate }) => {
                                 {sortedWeightData.length > 0 ? (
                                     <LineChart data={sortedWeightData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                                         <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="date" fontSize={12} />
+                                        <XAxis dataKey="recordDate" fontSize={12} />
                                         <YAxis domain={['dataMin - 1', 'dataMax + 1']} fontSize={12} />
                                         <Tooltip />
-                                        <Line type="monotone" dataKey="weigh" stroke="#4f46e5" strokeWidth={2} name="체중(kg)" />
+                                        <Line type="monotone" dataKey="weight" stroke="#4f46e5" strokeWidth={2} name="체중(kg)" />
                                     </LineChart>
                                 ) : ( <div className="flex items-center justify-center h-full text-gray-400">체중 기록이 없어요.</div> )}
                             </ResponsiveContainer>
                         </div>
                     </div>
-                    {/* 건강 메모 목록 */}
                     <div>
                         <h3 className="text-xl font-bold text-gray-800 mb-4">건강 메모 목록</h3>
                         <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-                            {petData.healthNotes && petData.healthNotes.length > 0 ? (
-                                [...petData.healthNotes].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(n => (
+                            {healthNotes.length > 0 ? (
+                                healthNotes.map(n => (
                                     <div key={n.id} className="p-3 bg-gray-50 rounded-lg">
                                         <div className="flex justify-between items-center text-sm mb-2">
-                                            <span className="font-semibold">{n.date}</span>
+                                            <span className="font-semibold">{n.recordDate}</span>
                                             <div className="flex gap-3">
-                                                <i className={`fas ${conditionStyles[n.mood].icon} ${conditionStyles[n.mood].color} text-lg`} title={`기분: ${conditionStyles[n.mood].label}`}></i>
-                                                <i className={`fas ${poopStyles[n.poop].icon} ${poopStyles[n.poop].color} text-lg`} title={`대변: ${poopStyles[n.poop].label}`}></i>
-                                                <i className={`fas fa-tint ${conditionStyles[n.pee].color} text-lg`} title={`소변: ${conditionStyles[n.pee].label}`}></i>
+                                                <i className={`fas ${conditionStyles[n.mood]?.icon} ${conditionStyles[n.mood]?.color} text-lg`} title={`기분: ${conditionStyles[n.mood]?.label}`}></i>
+                                                <i className={`fas ${poopStyles[n.poop]?.icon} ${poopStyles[n.poop]?.color} text-lg`} title={`대변: ${poopStyles[n.poop]?.label}`}></i>
+                                                <i className={`fas fa-tint ${conditionStyles[n.pee]?.color} text-lg`} title={`소변: ${conditionStyles[n.pee]?.label}`}></i>
                                             </div>
                                         </div>
                                         <p className="text-gray-700 text-sm">{n.symptoms}</p>
@@ -163,6 +184,7 @@ const WeightLogTab: React.FC<WeightLogTabProps> = ({ petData, onUpdate }) => {
                     </div>
                 </div>
             </div>
+            )}
         </div>
     );
 };

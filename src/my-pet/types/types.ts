@@ -6,14 +6,14 @@ export interface DailyMission {
 // 체중 기록
 export interface WeightRecord {
     id: number;
-    date: string;
+    recordDate: string;
     weigh: number;
 }
 
 // 건강 메모
 export interface HealthNote {
     id: number;
-    date: string;
+    recordDate: string;
     mood: 'good' | 'normal' | 'bad'; //기분
     poop: 'good' | 'normal' | 'bad'; //대변
     pee: 'good' | 'normal' | 'bad'; //소변
@@ -37,10 +37,6 @@ export interface AIReport {
     recommendations: string[]; // 추천 사항 목록
 }
 
-// --- Survey and Report Types ---
-
-// This will be the single source of truth for survey answers.
-// It accommodates both free and premium plans by having a flexible structure.
 export interface SurveyAnswers {
     plan: 'free' | 'premium';
     diet?: { [key: string]: string };
@@ -79,6 +75,7 @@ export interface PremiumQuestion {
 //펫 타입 속성들
 export interface Pet {
     id: number;
+    userId?: number;
     type: 'dog' | 'cat' | 'other';
     name: string;
     gender: '남아' | '여아' | '정보없음';
