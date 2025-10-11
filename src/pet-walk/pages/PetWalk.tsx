@@ -189,26 +189,30 @@ const PetWalk = React.memo(() => {
                 coordinates: routePoints
             });
 
-            // 1. 먼저 드로잉 모드 종료 (이게 가장 먼저!)
-            setIsDrawingMode(false);
-
-            // 2. 폴리라인 제거
+            // 1. 드로잉 폴리라인 완전 제거
             if (routePolyline) {
                 routePolyline.setMap(null);
                 setRoutePolyline(null);
             }
 
-            // 3. 마커들 제거
-            routeMarkers.forEach(marker => marker.setMap(null));
+            // 2. 드로잉 마커들 완전 제거
+            routeMarkers.forEach(marker => {
+                marker.setMap(null);
+            });
             setRouteMarkers([]);
 
-            // 4. 상태 초기화
+            // 3. 드로잉 모드 종료
+            setIsDrawingMode(false);
+
+            // 4. 드로잉 포인트 초기화
             setRoutePoints([]);
+
+            // 5. 모달 상태 초기화
             setRouteName('');
             setRouteDescription('');
             setShowCreateModal(false);
 
-            // 5. 저장된 산책로 목록 새로고침
+            // 6. 저장된 산책로 목록 새로고침
             await loadSavedRoutes();
         } catch (error: any) {
             console.error('Failed to save route:', error);
@@ -362,24 +366,40 @@ const PetWalk = React.memo(() => {
             clearAllMarkers();
             loadSavedRoutes();
         } else {
-            // 장소 검색 탭으로 전환 - 모든 산책로 관련 요소 제거
+            // 장소 검색 탭으로 전환 - 모든 산책로 관련 요소 완전 제거
 
-            // 1. 드로잉 모드 종료
-            if (isDrawingMode) {
-                if (routePolyline) {
-                    routePolyline.setMap(null);
-                    setRoutePolyline(null);
-                }
-                routeMarkers.forEach(marker => marker.setMap(null));
-                setRouteMarkers([]);
-                setRoutePoints([]);
-                setIsDrawingMode(false);
+            // 1. 드로잉 폴리라인 완전 제거
+            if (routePolyline) {
+                routePolyline.setMap(null);
+                setRoutePolyline(null);
             }
 
-            // 2. 표시된 산책로 제거
-            hideDisplayedRoute();
+            // 2. 드로잉 마커들 완전 제거
+            routeMarkers.forEach(marker => {
+                marker.setMap(null);
+            });
+            setRouteMarkers([]);
 
-            // 3. 모달 닫기
+            // 3. 드로잉 상태 초기화
+            setRoutePoints([]);
+            setIsDrawingMode(false);
+
+            // 4. 표시된 산책로 폴리라인 완전 제거
+            if (displayedRoutePolyline) {
+                displayedRoutePolyline.setMap(null);
+                setDisplayedRoutePolyline(null);
+            }
+
+            // 5. 표시된 산책로 마커들 완전 제거
+            displayedRouteMarkers.forEach(marker => {
+                marker.setMap(null);
+            });
+            setDisplayedRouteMarkers([]);
+
+            // 6. 선택된 산책로 초기화
+            setSelectedRoute(null);
+
+            // 7. 모달 닫기 및 초기화
             if (showCreateModal) {
                 setShowCreateModal(false);
                 setRouteName('');
@@ -512,17 +532,23 @@ const PetWalk = React.memo(() => {
     const displayRoute = useCallback((route: any) => {
         if (!map?.instance) return;
 
-        // 이전에 표시된 산책로 제거
+        // 1. 이전에 표시된 산책로 폴리라인 완전 제거
         if (displayedRoutePolyline) {
             displayedRoutePolyline.setMap(null);
+            setDisplayedRoutePolyline(null);
         }
-        displayedRouteMarkers.forEach(marker => marker.setMap(null));
 
-        // 새 산책로 표시
+        // 2. 이전에 표시된 산책로 마커들 완전 제거
+        displayedRouteMarkers.forEach(marker => {
+            marker.setMap(null);
+        });
+        setDisplayedRouteMarkers([]);
+
+        // 3. 새 산책로 표시
         const coordinates = route.coordinates;
         if (!coordinates || coordinates.length < 2) return;
 
-        // 폴리라인 생성 (녹색)
+        // 4. 새 폴리라인 생성 (녹색)
         const polyline = new (window.kakao.maps as any).Polyline({
             path: coordinates.map((p: any) => new window.kakao.maps.LatLng(p.lat, p.lng)),
             strokeWeight: 6,
@@ -533,7 +559,7 @@ const PetWalk = React.memo(() => {
         polyline.setMap(map.instance);
         setDisplayedRoutePolyline(polyline);
 
-        // 마커들 생성
+        // 5. 새 마커들 생성
         const markers: any[] = [];
         coordinates.forEach((point: any, index: number) => {
             const markerContent = `
@@ -568,7 +594,7 @@ const PetWalk = React.memo(() => {
         setDisplayedRouteMarkers(markers);
         setSelectedRoute(route);
 
-        // 지도를 산책로가 모두 보이도록 이동
+        // 6. 지도를 산책로가 모두 보이도록 이동
         const bounds = new window.kakao.maps.LatLngBounds();
         coordinates.forEach((point: any) => {
             bounds.extend(new window.kakao.maps.LatLng(point.lat, point.lng));

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { setupAxiosInterceptors } from '../../shared/utils/axiosInterceptors';
 
-const BASE_URL = '/api'; // 프록시 사용시
+const BASE_URL = import.meta.env.VITE_PETWALK_API_BASE_URL || '/api'; // 프로덕션: 환경변수, 개발: 프록시
 
 // axios 인스턴스 생성
 const api = axios.create({

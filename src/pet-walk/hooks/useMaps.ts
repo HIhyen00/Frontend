@@ -453,7 +453,7 @@ export const useMaps = () => {
                     map.setCenter(moveLatLng);
                     map.setLevel(3); // 더 자세한 레벨
 
-                    // 현재 위치 마커 생성 (특별한 이미지 사용)
+                    // 현재 위치 마커 생성 (녹색으로 구분)
                     const currentLocationImage = createCustomMarkerImage('green');
                     const marker = new window.kakao.maps.Marker({
                         position: moveLatLng,
@@ -462,50 +462,7 @@ export const useMaps = () => {
                         title: '현재 위치'
                     });
 
-                    // 현재 위치 인포윈도우 (블루 테마로 업데이트)
-                    const infoWindowContent = `
-                        <div style="
-                            padding: 16px;
-                            min-width: 240px;
-                            font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
-                            border-radius: 12px;
-                            box-shadow: 0 4px 20px rgba(59,130,246,0.3);
-                            background: #3b82f6;
-                            color: white;
-                        ">
-                            <div style="
-                                font-weight: 700;
-                                font-size: 16px;
-                                margin-bottom: 12px;
-                                display: flex;
-                                align-items: center;
-                                gap: 8px;
-                            ">
-                                <span style="font-size: 18px;">📍</span>
-                                현재 위치
-                            </div>
-                            <div style="
-                                font-size: 13px;
-                                opacity: 0.95;
-                                line-height: 1.5;
-                                background: rgba(255,255,255,0.2);
-                                padding: 10px;
-                                border-radius: 8px;
-                            ">
-                                <div>위도: ${latitude.toFixed(6)}</div>
-                                <div>경도: ${longitude.toFixed(6)}</div>
-                            </div>
-                        </div>
-                    `;
-
-                    const infoWindow = new window.kakao.maps.InfoWindow({
-                        content: infoWindowContent,
-                        removable: true
-                    });
-
-                    infoWindow.open(map, marker);
                     setCurrentMarker(marker);
-                    setCurrentInfoWindow(infoWindow);
                 }
                 
                 setLocationLoading(false);
