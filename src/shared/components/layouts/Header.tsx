@@ -1,6 +1,6 @@
 import {useState, useEffect} from "react";
 import {useNavigate} from "react-router-dom";
-import {FaPaw, FaBars, FaTimes, FaSearch, FaUser, FaSignOutAlt} from "react-icons/fa";
+import {FaPaw, FaBars, FaTimes, FaUser, FaSignOutAlt} from "react-icons/fa";
 import {NAV_ITEMS} from "../../constants/navigation.ts";
 import {useAuth} from "../../../account/hooks";
 
@@ -55,11 +55,6 @@ function Header() {
                 </nav>
 
                 <div className="flex items-center space-x-4">
-                    <button
-                        className="hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">
-                        <FaSearch className="text-sm"/>
-                    </button>
-
                     {isAuthenticated ? (
                         <div className="relative hidden md:block">
                             <button
