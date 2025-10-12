@@ -9,7 +9,7 @@ import {
     type RegisterVacRecordRequest,
     type UpdateVacRecordRequest,
     type MedicalRecordPageProps,
-} from '../utils/medicalRecordApi';
+} from '../utils/vaccinationHistoryApi.ts';
 
 const VaccinationHistory: React.FC<MedicalRecordPageProps> = ({ pet, onUpdatePet }) => {
     const petId = pet.id;

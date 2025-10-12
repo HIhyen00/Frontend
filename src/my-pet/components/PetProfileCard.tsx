@@ -40,7 +40,7 @@ const PetProfileCard: React.FC<PetProfileCardProps> = ({ pet, onEdit, onOpenConf
                         <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-indigo-200 bg-gray-100 flex items-center justify-center">
                             <img
                                 className="h-full w-full object-cover"
-                                src={pet.imageUrl}
+                                src={pet.imageUrl || '/default-pet-image.png'}
                                 alt={`${pet.name}의 프로필 사진`}
                                 onError={handleImageError}
                             />

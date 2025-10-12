@@ -20,10 +20,16 @@ const axiosInstance: AxiosInstance = axios.create({
     withCredentials: true,
 });
 
-// 요청 인터셉터 (테스트 모드 지원)
+// 요청 인터셉터 (테스트 모드 지원 + FormData 처리)
 axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         if (config.headers) {
+            // 🔥 FormData 처리: Content-Type을 자동으로 설정하도록 제거
+            if (config.data instanceof FormData) {
+                delete config.headers['Content-Type'];
+                console.log('📤 FormData 요청 감지 - Content-Type 자동 설정');
+            }
+
             // 테스트 모드일 경우 테스트 토큰 사용
             if (USE_TEST_TOKEN) {
                 config.headers.Authorization = TEST_TOKEN;
@@ -93,21 +99,14 @@ export const apiHelper = {
         return response.data;
     },
 
+    // ✅ 수정: FormData는 Content-Type을 자동으로 설정하도록
     postFormData: async <T>(url: string, formData: FormData): Promise<T> => {
-        const response = await axiosInstance.post<T>(url, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
+        const response = await axiosInstance.post<T>(url, formData);
         return response.data;
     },
 
     putFormData: async <T>(url: string, formData: FormData): Promise<T> => {
-        const response = await axiosInstance.put<T>(url, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
+        const response = await axiosInstance.put<T>(url, formData);
         return response.data;
     },
 };
