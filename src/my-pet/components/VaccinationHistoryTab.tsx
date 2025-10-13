@@ -10,6 +10,8 @@ import {
     type UpdateVacRecordRequest,
     type MedicalRecordPageProps,
 } from '../utils/vaccinationHistoryApi.ts';
+import AlertNotification from "../../shared/components/AlertNotification.tsx";
+import ConfirmModal from "./ConfirmModel.tsx";
 
 const VaccinationHistory: React.FC<MedicalRecordPageProps> = ({ pet, onUpdatePet }) => {
     const petId = pet.id;
@@ -23,6 +25,11 @@ const VaccinationHistory: React.FC<MedicalRecordPageProps> = ({ pet, onUpdatePet
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
     const [expandedOther, setExpandedOther] = useState<boolean>(false);
     const [showDropdown, setShowDropdown] = useState<number | null>(null);
+
+    // 알림 및 확인 모달
+    const [alert, setAlert] = useState<{ message: string; show: boolean }>({ message: '', show: false });
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
 
     // 모달 관련 상태
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -61,6 +68,12 @@ const VaccinationHistory: React.FC<MedicalRecordPageProps> = ({ pet, onUpdatePet
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [showDropdown]);
+
+    // 알림 표시 함수
+    const showAlert = (message: string) => {
+        setAlert({ message, show: true });
+        setTimeout(() => setAlert({ message: '', show: false }), 3000);
+    };
 
     // API: 백신 접종 기록 목록 조회
     const fetchVaccinationRecords = async () => {
@@ -119,7 +132,7 @@ const VaccinationHistory: React.FC<MedicalRecordPageProps> = ({ pet, onUpdatePet
             setShowDropdown(null);
         } catch (err) {
             console.error('접종 기록 조회 실패:', err);
-            alert('접종 기록을 불러오는데 실패했습니다.');
+            showAlert('접종 기록을 불러오는데 실패했습니다.');
         } finally {
             setLoading(false);
         }
@@ -152,7 +165,7 @@ const VaccinationHistory: React.FC<MedicalRecordPageProps> = ({ pet, onUpdatePet
 
                 validateVaccinationRecord(updateData);
                 await vaccinationRecordApi.update(petId, selectedRecordId, updateData);
-                alert('접종 기록이 수정되었습니다.');
+                showAlert('접종 기록이 수정되었습니다.');
             } else {
                 // 추가
                 const registerData: RegisterVacRecordRequest = {
@@ -164,28 +177,36 @@ const VaccinationHistory: React.FC<MedicalRecordPageProps> = ({ pet, onUpdatePet
 
                 validateVaccinationRecord(registerData);
                 await vaccinationRecordApi.register(petId, registerData);
-                alert('접종 기록이 추가되었습니다.');
+                showAlert('접종 기록이 추가되었습니다.');
             }
 
             closeModal();
             await fetchVaccinationRecords(); // 데이터 새로고침
         } catch (err: any) {
             console.error('백신 기록 처리 중 오류:', err);
-            alert(err.message || '백신 기록 처리에 실패했습니다.');
+            showAlert('백신 기록 처리에 실패했습니다.');
         }
     };
 
+    const handleOpenConfirm = (recordId: number) => {
+        setRecordToDelete(recordId);
+        setIsConfirmOpen(true);
+        setShowDropdown(null);
+    };
+
     // 백신 기록 삭제
-    const handleDelete = async (recordId: number) => {
-        if (window.confirm('정말로 이 접종 기록을 삭제하시겠습니까?')) {
+    const handleConfirmDelete = async () => {
+        if (recordToDelete !== null) {
             try {
-                await vaccinationRecordApi.delete(petId, recordId);
-                alert('접종 기록이 삭제되었습니다.');
-                setShowDropdown(null);
+                await vaccinationRecordApi.delete(petId, recordToDelete);
+                showAlert('접종기록이 삭제되었습니다.');
                 await fetchVaccinationRecords(); // 데이터 새로고침
             } catch (err) {
-                console.error('백신 기록 삭제 중 오류:', err);
-                alert('백신 기록 삭제에 실패했습니다.');
+                console.error('백신기록 삭제 중 오류:', err);
+                showAlert('백신기록 삭제에 실패했습니다.');
+            } finally {
+                setIsConfirmOpen(false);
+                setRecordToDelete(null);
             }
         }
     };
@@ -301,7 +322,7 @@ const VaccinationHistory: React.FC<MedicalRecordPageProps> = ({ pet, onUpdatePet
                                                                     수정
                                                                 </button>
                                                                 <button
-                                                                    onClick={() => handleDelete(record.recordId)}
+                                                                    onClick={() => handleOpenConfirm(record.recordId)}
                                                                     className="block w-full px-3 py-2 text-center text-sm text-red-600 hover:bg-gray-100"
                                                                 >
                                                                     삭제
@@ -404,7 +425,7 @@ const VaccinationHistory: React.FC<MedicalRecordPageProps> = ({ pet, onUpdatePet
                                                             수정
                                                         </button>
                                                         <button
-                                                            onClick={() => handleDelete(record.recordId)}
+                                                            onClick={() => handleOpenConfirm(record.recordId)}
                                                             className="block w-full px-3 py-2 text-center text-sm text-red-600 hover:bg-gray-100"
                                                         >
                                                             삭제
@@ -508,6 +529,21 @@ const VaccinationHistory: React.FC<MedicalRecordPageProps> = ({ pet, onUpdatePet
                     </div>
                 </div>
             )}
+            {/* AlertNotification */}
+            <AlertNotification
+                message={alert.message}
+                show={alert.show}
+                onClose={() => setAlert({ ...alert, show: false })}
+            />
+
+            {/* ConfirmModal */}
+            <ConfirmModal
+                isOpen={isConfirmOpen}
+                onClose={() => setIsConfirmOpen(false)}
+                onConfirm={handleConfirmDelete}
+                title="삭제 확인"
+                message="정말로 이 접종 기록을 삭제하시겠습니까?"
+            />
         </>
     );
 };

@@ -62,6 +62,7 @@ const HealthReportPage: React.FC = () => {
 
     return (
         <div className="bg-gray-50 min-h-screen p-4 sm:p-8">
+            <div className="h-16 w-full"></div>
             <div className="max-w-4xl mx-auto">
                 <header className="flex items-center gap-6 mb-8">
                     <button onClick={() => navigate('/my-pet')} className="text-gray-500 hover:text-gray-800">

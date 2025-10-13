@@ -221,10 +221,10 @@ const MyPetPage: React.FC = () => {
 
             if (modalMode === 'add') {
                 const response = await petApi.registerPet(request);
-                showAlert(`${response.name}이(가) 등록되었습니다!`);
+                showAlert(`${response?.name || petData.name}이(가) 등록되었습니다!`);
             } else if (currentPet) {
                 const response = await petApi.updatePet(currentPet.id, request);
-                showAlert(`${response.name}의 정보가 수정되었습니다.`);
+                showAlert(`${response?.name || petData.name || currentPet.name}의 정보가 수정되었습니다.`);
             }
 
             // 목록 새로고침

@@ -11,6 +11,7 @@ import {
     type MedicationItemDto,
 } from '../utils/medicalRecordApi';
 import MedicalRecordItemModal from './MedicalRecordItemModal';
+import ConfirmModal from "./ConfirmModel.tsx";
 
 interface MedicalRecordRegisterModalProps {
     petId: number;
@@ -19,6 +20,7 @@ interface MedicalRecordRegisterModalProps {
     initialData: ReadMedicalRecordResponse | null;
     onClose: () => void;
     onSuccess: () => void;
+    showAlert: (message: string) => void;
 }
 
 type ItemType = 'test' | 'treatment' | 'medication';
@@ -30,6 +32,7 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                                                                                    initialData,
                                                                                    onClose,
                                                                                    onSuccess,
+                                                                                   showAlert,
                                                                                }) => {
     const [loading, setLoading] = useState(false);
     const [analyzing, setAnalyzing] = useState(false);
@@ -57,15 +60,18 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
     const [receiptFileId, setReceiptFileId] = useState<number | null>(null);
     const [receiptFile, setReceiptFile] = useState<File | null>(null);
     const [receiptFileName, setReceiptFileName] = useState<string>('');
-    const [receiptFileInfo, setReceiptFileInfo] = useState<FileInfoDto | null>(null);  // ✅ 추가
+    const [receiptFileInfo, setReceiptFileInfo] = useState<FileInfoDto | null>(null);
 
     const [attachmentFileIds, setAttachmentFileIds] = useState<number[]>([]);
     const [attachmentFiles, setAttachmentFiles] = useState<Array<{file: File, name: string, id?: number}>>([]);
-    const [attachmentFileInfos, setAttachmentFileInfos] = useState<FileInfoDto[]>([]);  // ✅ 추가
+    const [attachmentFileInfos, setAttachmentFileInfos] = useState<FileInfoDto[]>([]);
 
     // 파일 input refs
     const receiptInputRef = useRef<HTMLInputElement>(null);
     const attachmentInputRef = useRef<HTMLInputElement>(null);
+
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState<{ type: ItemType; index: number } | null>(null);
 
     // 항목 추가 모달
     const [isItemModalOpen, setIsItemModalOpen] = useState(false);
@@ -143,7 +149,7 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                 });
             } catch (error) {
                 console.error('청구서 업로드 실패:', error);
-                alert('청구서 업로드에 실패했습니다.');
+                showAlert('청구서 업로드에 실패했습니다.');
                 setReceiptFile(null);
                 setReceiptFileName('');
             }
@@ -171,13 +177,13 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
     // GPT 자동 분석
     const handleAutoAnalyze = async () => {
         if (!receiptFile) {
-            alert('청구서 파일을 먼저 업로드해주세요.');
+            showAlert('청구서 파일을 먼저 업로드해주세요.');
             return;
         }
 
         // 항목이 하나라도 있으면 경고
         if (testItems.length > 0 || treatmentItems.length > 0 || medicationItems.length > 0) {
-            alert('자동 분석은 항목이 비어있을 때만 가능합니다. 기존 항목을 먼저 삭제해주세요.');
+            showAlert('자동 분석은 항목이 비어있을 때만 가능합니다. 기존 항목을 먼저 삭제해주세요.');
             return;
         }
 
@@ -197,10 +203,10 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
             if (analysisResult.treatmentItems) setTreatmentItems(analysisResult.treatmentItems);
             if (analysisResult.medicationItems) setMedicationItems(analysisResult.medicationItems);
 
-            alert('청구서 분석이 완료되었습니다! 내용을 확인하고 수정해주세요.');
+            showAlert('청구서 분석이 완료되었습니다! 내용을 확인하고 수정해주세요.');
         } catch (error: any) {
             console.error('GPT 분석 실패:', error);
-            alert(error.message || '청구서 분석에 실패했습니다.');
+            showAlert(error.message || '청구서 분석에 실패했습니다.');
         } finally {
             setAnalyzing(false);
         }
@@ -231,7 +237,7 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                     }]);
                 } catch (error) {
                     console.error('첨부파일 업로드 실패:', error);
-                    alert(`${file.name} 업로드에 실패했습니다.`);
+                    showAlert(`${file.name} 업로드에 실패했습니다.`);
                 }
             }
         }
@@ -255,7 +261,7 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
 
     const handleSubmit = async () => {
         if (!hospitalName.trim()) {
-            alert('병원 이름을 입력해주세요.');
+            showAlert('병원 이름을 입력해주세요.');
             return;
         }
 
@@ -280,7 +286,7 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                 };
 
                 await medicalRecordApi.update(petId, recordId, updateData);
-                alert('진료기록이 수정되었습니다.');
+                showAlert('진료기록이 수정되었습니다.');
             } else {
                 const registerData: RegisterMedicalRecordRequest = {
                     visitDate,
@@ -299,13 +305,13 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                 };
 
                 await medicalRecordApi.register(petId, registerData);
-                alert('진료기록이 등록되었습니다.');
+                showAlert('진료기록이 등록되었습니다.');
             }
 
             onSuccess();
         } catch (err: any) {
             console.error('진료기록 처리 중 오류:', err);
-            alert(err.message || '진료기록 처리에 실패했습니다.');
+            showAlert('진료기록 처리에 실패했습니다.');
         } finally {
             setLoading(false);
         }
@@ -340,15 +346,23 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
         setEditingItemIndex(null);
     };
 
-    const handleItemDelete = (type: ItemType, index: number) => {
-        if (!window.confirm('이 항목을 삭제하시겠습니까?')) return;
+    const handleOpenConfirm = (type: ItemType, index: number) => {
+        setItemToDelete({type, index});
+        setIsConfirmOpen(true);
+    }
 
-        if (type === 'test') {
-            setTestItems(testItems.filter((_, i) => i !== index));
-        } else if (type === 'treatment') {
-            setTreatmentItems(treatmentItems.filter((_, i) => i !== index));
-        } else {
-            setMedicationItems(medicationItems.filter((_, i) => i !== index));
+    const handleConfirmDelete = () => {
+        if (itemToDelete) {
+            const {type, index} = itemToDelete;
+            if (type === 'test') {
+                setTestItems(testItems.filter((_, i) => i !== index));
+            } else if (type === 'treatment') {
+                setTreatmentItems(treatmentItems.filter((_, i) => i !== index));
+            } else {
+                setMedicationItems(medicationItems.filter((_, i) => i !== index));
+            }
+            setIsConfirmOpen(false);
+            setItemToDelete(null);
         }
     };
 
@@ -392,7 +406,7 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => handleItemDelete(type, index)}
+                                    onClick={() => handleOpenConfirm(type, index)}
                                     className="text-red-500 hover:text-red-700"
                                 >
                                     <i className="fas fa-trash"></i>
@@ -694,6 +708,14 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                     }}
                 />
             )}
+
+            <ConfirmModal
+                isOpen={isConfirmOpen}
+                onClose={() => setIsConfirmOpen(false)}
+                onConfirm={handleConfirmDelete}
+                title="삭제 확인"
+                message="정말로 이 항목을 삭제하시겠습니까?"
+            />
 
         </>
     );
