@@ -8,6 +8,8 @@ import {
 } from '../utils/medicalRecordApi';
 import type { Pet } from '../../types/types';
 import MedicalRecordRegisterModal from './MedicalRecordRegisterModal';
+import AlertNotification from "../../shared/components/AlertNotification.tsx";
+import ConfirmModal from "./ConfirmModel.tsx";
 
 interface MedicalRecordTabProps {
     petData: Pet;
@@ -22,6 +24,11 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
     const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
     const [selectedRecordData, setSelectedRecordData] = useState<ReadMedicalRecordResponse | null>(null);
 
+    // 항목 펼침,접힘 상태
+    const [expandedTest, setExpandedTest] = useState<boolean>(true);
+    const [expandedTreatment, setExpandedTreatment] = useState<boolean>(true);
+    const [expandedMedication, setExpandedMedication] = useState<boolean>(true);
+
     // 데이터 상태
     const [records, setRecords] = useState<ListMedicalRecordResponse['medicalRecordList']>([]);
     const [currentPage, setCurrentPage] = useState(1);
@@ -34,6 +41,11 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
     const [showDropdown, setShowDropdown] = useState<number | null>(null);
     const [showDetailMenu, setShowDetailMenu] = useState<boolean>(false);
 
+    // 알림 및 확인 모달
+    const [alert, setAlert] = useState<{ message: string; show: boolean }>({ message: '', show: false });
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
+
     // 모달 상태
     const [isRegisterModalOpen, setIsRegisterModalOpen] = useState<boolean>(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
@@ -45,6 +57,12 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
             fetchMedicalRecords();
         }
     }, [currentPage, petId, currentView]);
+
+    // 알림 표시 함수
+    const showAlert = (message: string) => {
+        setAlert({ message, show: true });
+        setTimeout(() => setAlert({ message: '', show: false }), 3000);
+    };
 
     const fetchMedicalRecords = async () => {
         try {
@@ -77,7 +95,7 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
             setCurrentView('detail');
         } catch (err) {
             console.error('진료기록 조회 실패:', err);
-            alert('진료기록을 불러오는데 실패했습니다.');
+            showAlert('진료기록을 불러오는데 실패했습니다.');
         } finally {
             setLoading(false);
         }
@@ -116,29 +134,35 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
             setIsRegisterModalOpen(true);
         } catch (err) {
             console.error('진료기록 조회 실패:', err);
-            alert('진료기록을 불러오는데 실패했습니다.');
+            showAlert('진료기록을 불러오는데 실패했습니다.');
         } finally {
             setLoading(false);
         }
     };
 
-    // 삭제 처리
-    const handleDelete = async (recordId: number) => {
-        if (!window.confirm('정말로 이 진료기록을 삭제하시겠습니까?')) {
-            return;
-        }
+    const handleOpenConfirm = (recordId: number) => {
+        setRecordToDelete(recordId);
+        setIsConfirmOpen(true);
+        setShowDetailMenu(false);
+    };
 
-        try {
-            setLoading(true);
-            await medicalRecordApi.delete(petId, recordId);
-            alert('진료기록이 삭제되었습니다.');
-            backToList();
-            await fetchMedicalRecords();
-        } catch (err) {
-            console.error('진료기록 삭제 실패:', err);
-            alert('진료기록 삭제에 실패했습니다.');
-        } finally {
-            setLoading(false);
+    // 삭제 처리
+    const handleConfirmDelete  = async () => {
+        if ( recordToDelete !== null) {
+            try {
+                setLoading(true);
+                await medicalRecordApi.delete(petId, recordToDelete);
+                showAlert('진료기록이 삭제되었습니다.');
+                backToList();
+                await fetchMedicalRecords();
+            } catch (err) {
+                console.error('진료기록 삭제 실패:', err);
+                showAlert('진료기록 삭제에 실패했습니다.');
+            } finally {
+                setLoading(false);
+                setIsConfirmOpen(false);
+                setRecordToDelete(null);
+            }
         }
     };
 
@@ -170,7 +194,7 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
                             </button>
 
                             {showDetailMenu && (
-                                <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border z-10">
+                                <div className="absolute right-0 mt-2 w-16 bg-white rounded-lg shadow-lg border border-gray-400 z-10">
                                     <button
                                         onClick={() => {
                                             console.log('수정 버튼 클릭!');
@@ -181,16 +205,13 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
                                             openEditModalFromDetail();
                                             setShowDetailMenu(false);
                                         }}
-                                        className="w-full px-4 py-2 text-left hover:bg-gray-100 text-sm"
+                                        className="w-full px-4 py-2 text-left hover:bg-gray-50 text-sm"
                                     >
                                         수정
                                     </button>
                                     <button
-                                        onClick={() => {
-                                            handleDelete(record.id);
-                                            setShowDetailMenu(false);
-                                        }}
-                                        className="w-full px-4 py-2 text-left hover:bg-gray-100 text-sm text-red-600"
+                                        onClick={() => {handleOpenConfirm(record.id)}}
+                                        className="w-full px-4 py-2 text-left hover:bg-gray-50 text-sm text-red-500"
                                     >
                                         삭제
                                     </button>
@@ -199,46 +220,38 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
                         </div>
                     </div>
 
-                    {/* 병원 정보 */}
-                    <div className="mb-6">
-                        <h3 className="text-2xl font-bold text-gray-800 mb-2">{record.hospitalName || '병원명 없음'}</h3>
-                        {record.hospitalNumber && (
-                            <p className="text-gray-600 text-sm">{record.hospitalNumber}</p>
-                        )}
-                        {record.hospitalAddress && (
-                            <p className="text-gray-600 text-sm mt-1">{record.hospitalAddress}</p>
-                        )}
+                    {/* 병원 정보 및 진료일 */}
+                    <div className="mt-3 mb-8">
+                        <h3 className="text-2xl font-semibold text-gray-800 mb-4">{record.hospitalName || '병원명 없음'}</h3>
+                        <p className="text-gray-600 text-sm mt-2">
+                            <span className="text-gray-400"><i class="fa-solid fa-phone"></i></span>&emsp; {record.hospitalNumber}
+                        </p>
+                        <p className="text-gray-600 text-sm mt-2">
+                            <span className="text-gray-400"><i class="fa-solid fa-location-dot"></i></span>&emsp; {record.hospitalAddress}
+                        </p>
+                        <p className="text-gray-600 text-sm mt-2">
+                            <span className="text-gray-400"><i class="fa-solid fa-calendar-day"></i></span>&emsp; {formatMedicalDate(record.visitDate)}
+                        </p>
                     </div>
 
-                    {/* 진료 정보 */}
-                    <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <p className="text-sm text-gray-500">진료일</p>
-                                <p className="text-base font-medium text-gray-800">{formatMedicalDate(record.visitDate)}</p>
+                    {/* 진단 및 증상 */}
+                    {(record.diagnosis || record.symptoms) && (
+                        <div className="mb-8">
+                            <h4 className="text-lg font-semibold text-gray-800 mb-2">진단 및 증상</h4>
+                            <div className="bg-purple-50 p-4 rounded-lg space-y-1">
+                                {record.diagnosis && (
+                                    <div>
+                                        <span className="text-sm font-medium text-gray-400">진단 : </span>
+                                        <span className="text-sm text-gray-700">{record.diagnosis}</span>
+                                    </div>
+                                )}
+                                {record.symptoms && (
+                                    <div>
+                                        <span className="text-sm font-medium text-gray-400">증상 : </span>
+                                        <span className="text-sm text-gray-700 whitespace-pre-wrap">{record.symptoms}</span>
+                                    </div>
+                                )}
                             </div>
-                            {record.totalAmount && (
-                                <div>
-                                    <p className="text-sm text-gray-500">총 금액</p>
-                                    <p className="text-base font-medium text-indigo-600">{formatAmount(record.totalAmount)}</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* 진단 */}
-                    {record.diagnosis && (
-                        <div className="mb-6">
-                            <h4 className="text-lg font-semibold text-gray-800 mb-2">진단</h4>
-                            <p className="text-gray-700 bg-blue-50 p-3 rounded-lg">{record.diagnosis}</p>
-                        </div>
-                    )}
-
-                    {/* 증상 */}
-                    {record.symptoms && (
-                        <div className="mb-6">
-                            <h4 className="text-lg font-semibold text-gray-800 mb-2">증상</h4>
-                            <p className="text-gray-700 bg-yellow-50 p-3 rounded-lg whitespace-pre-wrap">{record.symptoms}</p>
                         </div>
                     )}
 
@@ -267,104 +280,207 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
 
                     {/* 검사 항목 */}
                     {record.testItems && record.testItems.length > 0 && (
-                        <div className="mb-6">
-                            <h4 className="text-lg font-semibold text-gray-800 mb-3">검사 항목</h4>
-                            <div className="space-y-2">
-                                {record.testItems.map((item, index) => (
-                                    <div key={index} className="bg-purple-50  rounded-lg p-3">
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex-1">
-                                                <p className="font-medium text-gray-800">{item.name}</p>
-                                                {item.notes && (
-                                                    <p className="text-sm text-gray-500 mt-1">{item.notes}</p>
-                                                )}
-                                                {item.quantity && item.unitPrice && (
-                                                    <p className="text-xs text-gray-500 mt-1">
-                                                        {item.quantity}개 × {formatAmount(item.unitPrice)}
-                                                    </p>
-                                                )}
+                        <div className="mb-4">
+                            <div className="rounded-lg bg-gray-100">
+                                <button
+                                    onClick={() => setExpandedTest(!expandedTest)}
+                                    className={`w-full flex items-center justify-between p-3 transition-colors rounded-t-lg ${
+                                        expandedTest ? 'bg-purple-400' : 'bg-gray-50'
+                                    }`}
+                                >
+                                    <span className={`text-base font-medium ${
+                                        expandedTest ? 'text-white' : 'text-gray-600'
+                                    }`}>
+                                        검사 항목
+                                    </span>
+                                    <svg
+                                        className={`w-5 h-5 transform transition-transform ${
+                                            expandedTest ? 'rotate-180 text-white' : 'text-gray-600'
+                                        }`}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+
+                                {expandedTest && (
+                                    <div className="bg-gray-100 rounded-b-lg divide-y divide-gray-300">
+                                        {record.testItems.map((item, index) => (
+                                            <div key={index} className="p-3">
+                                                <div className="grid grid-cols-2 gap-y-1">
+                                                    <div className="col-span-1">
+                                                        <p className="font-medium text-gray-800">{item.name}</p>
+                                                    </div>
+                                                    <div className="col-span-1 text-right">
+                                                        {item.amount && (
+                                                            <p className="text-medium text-purple-800">
+                                                                {formatAmount(item.amount)}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="col-span-1">
+                                                        {item.notes && (
+                                                            <p className="text-sm text-gray-500">{item.notes}</p>
+                                                        )}
+                                                    </div>
+                                                    <div className="col-span-1 text-right">
+                                                        {item.quantity && item.unitPrice && (
+                                                            <p className="text-xs text-gray-400">
+                                                                {item.quantity}개 × {formatAmount(item.unitPrice)}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            {item.amount && (
-                                                <p className="font-medium text-purple-600">{formatAmount(item.amount)}</p>
-                                            )}
-                                        </div>
+                                        ))}
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
                     )}
 
                     {/* 처치 항목 */}
                     {record.treatmentItems && record.treatmentItems.length > 0 && (
-                        <div className="mb-6">
-                            <h4 className="text-lg font-semibold text-gray-800 mb-3">처치 항목</h4>
-                            <div className="space-y-2">
-                                {record.treatmentItems.map((item, index) => (
-                                    <div key={index} className="bg-purple-50  rounded-lg p-3">
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex-1">
-                                                <p className="font-medium text-gray-800">{item.name}</p>
-                                                {item.notes && (
-                                                    <p className="text-sm text-gray-500 mt-1">{item.notes}</p>
-                                                )}
-                                                {item.quantity && item.unitPrice && (
-                                                    <p className="text-xs text-gray-500 mt-1">
-                                                        {item.quantity}개 × {formatAmount(item.unitPrice)}
-                                                    </p>
-                                                )}
+                        <div className="mb-4">
+                            <div className="rounded-lg bg-gray-100">
+                                <button
+                                    onClick={() => setExpandedTreatment(!expandedTreatment)}
+                                    className={`w-full flex items-center justify-between p-3 transition-colors rounded-t-lg ${
+                                        expandedTreatment ? 'bg-purple-400' : 'bg-gray-50'
+                                    }`}
+                                >
+                                    <span className={`text-base font-medium ${
+                                        expandedTreatment ? 'text-white' : 'text-gray-600'
+                                    }`}>
+                                        처치 항목
+                                    </span>
+                                    <svg
+                                        className={`w-5 h-5 transform transition-transform ${
+                                            expandedTreatment ? 'rotate-180 text-white' : 'text-gray-600'
+                                        }`}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+
+                                {expandedTreatment && (
+                                    <div className="bg-gray-100 rounded-b-lg divide-y divide-gray-300">
+                                        {record.treatmentItems.map((item, index) => (
+                                            <div key={index} className="p-3">
+                                                <div className="grid grid-cols-2 gap-y-1">
+                                                    <div className="col-span-1">
+                                                        <p className="font-medium text-gray-800">{item.name}</p>
+                                                    </div>
+                                                    <div className="col-span-1 text-right">
+                                                        {item.amount && (
+                                                            <p className="text-medium text-purple-800">
+                                                                {formatAmount(item.amount)}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="col-span-1">
+                                                        {item.notes && (
+                                                            <p className="text-sm text-gray-500">{item.notes}</p>
+                                                        )}
+                                                    </div>
+                                                    <div className="col-span-1 text-right">
+                                                        {item.quantity && item.unitPrice && (
+                                                            <p className="text-xs text-gray-400">
+                                                                {item.quantity}개 × {formatAmount(item.unitPrice)}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            {item.amount && (
-                                                <p className="font-medium text-purple-600">{formatAmount(item.amount)}</p>
-                                            )}
-                                        </div>
+                                        ))}
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
                     )}
 
+
                     {/* 처방 항목 */}
                     {record.medicationItems && record.medicationItems.length > 0 && (
-                        <div className="mb-6">
-                            <h4 className="text-lg font-semibold text-gray-800 mb-3">처방 항목</h4>
-                            <div className="space-y-2">
-                                {record.medicationItems.map((item, index) => (
-                                    <div key={index} className="bg-purple-50 rounded-lg p-3">
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex-1">
-                                                <p className="font-medium text-gray-800">{item.name}</p>
-                                                {item.notes && (
-                                                    <p className="text-sm text-gray-500 mt-1">{item.notes}</p>
-                                                )}
-                                                {item.quantity && item.unitPrice && (
-                                                    <p className="text-xs text-gray-500 mt-1">
-                                                        {item.quantity}개 × {formatAmount(item.unitPrice)}
-                                                    </p>
-                                                )}
+                        <div className="mb-4">
+                            <div className="rounded-lg bg-gray-100">
+                                <button
+                                    onClick={() => setExpandedMedication(!expandedMedication)}
+                                    className={`w-full flex items-center justify-between p-3 transition-colors rounded-t-lg ${
+                                        expandedMedication ? 'bg-purple-400' : 'bg-gray-50'
+                                    }`}
+                                >
+                                    <span className={`text-base font-medium ${
+                                        expandedMedication ? 'text-white' : 'text-gray-600'
+                                    }`}>
+                                        처방 항목
+                                    </span>
+                                    <svg
+                                        className={`w-5 h-5 transform transition-transform ${
+                                            expandedMedication ? 'rotate-180 text-white' : 'text-gray-600'
+                                        }`}
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+
+                                {expandedMedication && (
+                                    <div className="bg-gray-100 rounded-b-lg divide-y divide-gray-300">
+                                        {record.medicationItems.map((item, index) => (
+                                            <div key={index} className="p-3">
+                                                <div className="grid grid-cols-2 gap-y-1">
+                                                    <div className="col-span-1">
+                                                        <p className="font-medium text-gray-800">{item.name}</p>
+                                                    </div>
+                                                    <div className="col-span-1 text-right">
+                                                        {item.amount && (
+                                                            <p className="text-medium text-purple-800">
+                                                                {formatAmount(item.amount)}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="col-span-1">
+                                                        {item.notes && (
+                                                            <p className="text-sm text-gray-500">{item.notes}</p>
+                                                        )}
+                                                    </div>
+                                                    <div className="col-span-1 text-right">
+                                                        {item.quantity && item.unitPrice && (
+                                                            <p className="text-xs text-gray-400">
+                                                                {item.quantity}개 × {formatAmount(item.unitPrice)}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            {item.amount && (
-                                                <p className="font-medium text-purple-600">{formatAmount(item.amount)}</p>
-                                            )}
-                                        </div>
+                                        ))}
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
                     )}
 
                     {/* 금액 정보 */}
                     {(record.totalAmount || record.vatAmount) && (
-                        <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                        <div className="mt-8 border-t-2 border-gray-300 bg-white rounded-lg p-4 mb-10">
                             <div className="space-y-2">
                                 {record.totalAmount && (
                                     <div className="flex justify-between">
-                                        <span className="text-gray-700">총 금액</span>
-                                        <span className="text-lg font-bold text-indigo-600">{formatAmount(record.totalAmount)}</span>
+                                        <span className="text-gray-700 font-medium">총 금액</span>
+                                        <span className="text-xl font-bold text-indigo-600">{formatAmount(record.totalAmount)}</span>
                                     </div>
                                 )}
                                 {record.vatAmount && (
                                     <div className="flex justify-between">
-                                        <span className="text-gray-400 text-sm">부가세</span>
+                                        <span className="text-gray-600 text-sm">부가세</span>
                                         <span className="text-sm text-gray-600">{formatAmount(record.vatAmount)}</span>
                                     </div>
                                 )}
@@ -411,8 +527,21 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
                             backToList();
                             fetchMedicalRecords();
                         }}
+                        showAlert={showAlert}
                     />
                 )}
+                <AlertNotification
+                    message={alert.message}
+                    show={alert.show}
+                    onClose={() => setAlert({ ...alert, show: false })}
+                />
+                <ConfirmModal
+                    isOpen={isConfirmOpen}
+                    onClose={() => setIsConfirmOpen(false)}
+                    onConfirm={handleConfirmDelete}
+                    title="삭제 확인"
+                    message="정말로 이 진료기록을 삭제하시겠습니까?"
+                />
             </>
         );
     }
@@ -441,13 +570,17 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
                             <div
                                 key={record.id}
                                 onClick={() => goToDetail(record.id)}
-                                className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
+                                className="border border-gray-300 rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
                             >
-                                <div className="flex justify-between">
-                                    <div>
-                                        <p className="font-semibold">{record.hospitalName || '병원명 미등록'}</p>
+                                <div className="grid grid-cols-2 gap-y-2">
+                                    <div className="col-span-1">
+                                        <p className="font-medium">{record.hospitalName || '병원명 미등록'}</p>
+                                    </div>
+                                    <div className="col-span-1 text-right">
                                         <p className="text-sm text-gray-500">{formatMedicalDate(record.visitDate)}</p>
-                                        <p className="text-sm text-gray-600 mt-1">{record.diagnosis || '진단명 없음'}</p>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <p className="text-sm text-gray-400">{record.diagnosis || '진단명 없음'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -504,8 +637,21 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
                         backToList();
                         fetchMedicalRecords();
                     }}
+                    showAlert={showAlert}
                 />
             )}
+            <AlertNotification
+                message={alert.message}
+                show={alert.show}
+                onClose={() => setAlert({ ...alert, show: false })}
+            />
+            <ConfirmModal
+                isOpen={isConfirmOpen}
+                onClose={() => setIsConfirmOpen(false)}
+                onConfirm={handleConfirmDelete}
+                title="삭제 확인"
+                message="정말로 이 진료기록을 삭제하시겠습니까?"
+            />
         </div>
     );
 };

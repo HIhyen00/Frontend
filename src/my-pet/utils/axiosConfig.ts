@@ -24,16 +24,15 @@ const axiosInstance: AxiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         if (config.headers) {
-            // 🔥 FormData 처리: Content-Type을 자동으로 설정하도록 제거
             if (config.data instanceof FormData) {
                 delete config.headers['Content-Type'];
-                console.log('📤 FormData 요청 감지 - Content-Type 자동 설정');
+                console.log('FormData 요청 감지 - Content-Type 자동 설정');
             }
 
             // 테스트 모드일 경우 테스트 토큰 사용
             if (USE_TEST_TOKEN) {
                 config.headers.Authorization = TEST_TOKEN;
-                console.log('🔧 [DEV MODE] Using test token');
+                console.log('[DEV MODE] Using test token');
             } else {
                 // 일반 모드: localStorage 또는 sessionStorage에서 토큰 가져오기
                 let token = localStorage.getItem('token');
@@ -99,7 +98,6 @@ export const apiHelper = {
         return response.data;
     },
 
-    // ✅ 수정: FormData는 Content-Type을 자동으로 설정하도록
     postFormData: async <T>(url: string, formData: FormData): Promise<T> => {
         const response = await axiosInstance.post<T>(url, formData);
         return response.data;
