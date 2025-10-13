@@ -43,6 +43,11 @@ export default defineConfig({
                 target: 'http://localhost:8002',
                 changeOrigin: true,
                 secure: false,
+            },
+            '/api/qna':{
+                target: 'http://localhost:8004',
+                changeOrigin: true,
+                secure: false,
             }
         }
     }
