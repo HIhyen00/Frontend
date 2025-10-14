@@ -9,6 +9,7 @@ import {FaSignOutAlt} from "react-icons/fa";
 
 const Home = lazy(() => import("../landing/pages/Home.tsx"));
 const PetSns = lazy(() => import("../sns/pages/PetSns.tsx"));
+const MyPosts = lazy(() => import("../sns/pages/MyPosts.tsx"));
 const PetWalk = lazy(() => import("../pet-walk/pages/PetWalk.tsx"));
 const MyPetPage = lazy(() => import("../my-pet/pages/my-pet/MyPetPage.tsx"));
 const Login = lazy(() => import("../account/pages/Login.tsx"));
@@ -76,6 +77,7 @@ function AppRouter() {
                     <Route element={<Layout/>}>
                         <Route path="/" element={<Home/>}/>
                         <Route path="/sns" element={<PetSns/>}/>
+                        <Route path="/sns/my-posts" element={<MyPosts/>}/>
                         <Route path="/pet-walk" element={<PetWalk/>}/>
                         <Route path="/my-pet" element={<MyPetPage/>}/>
                         <Route path="/my-page" element={<MyPage/>}/>

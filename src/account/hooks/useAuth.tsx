@@ -79,11 +79,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     // localStorage 또는 sessionStorage에서 토큰 확인
-    let token = localStorage.getItem('token');
+    let token = localStorage.getItem('token') || localStorage.getItem('userToken');
     let userStr = localStorage.getItem('user');
 
     if (!token) {
-      token = sessionStorage.getItem('token');
+      token = sessionStorage.getItem('token') || sessionStorage.getItem('userToken');
       userStr = sessionStorage.getItem('user');
     }
 
@@ -96,8 +96,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
       } catch {
         localStorage.removeItem('token');
+        localStorage.removeItem('userToken');
         localStorage.removeItem('user');
         sessionStorage.removeItem('token');
+        sessionStorage.removeItem('userToken');
         sessionStorage.removeItem('user');
       }
     }
@@ -116,6 +118,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // rememberMe에 따라 localStorage 또는 sessionStorage 사용
       const storage = rememberMe ? localStorage : sessionStorage;
       storage.setItem('token', response.accessToken);
+      storage.setItem('userToken', response.accessToken); // SNS용 userToken도 저장
+      storage.setItem('accessToken', response.accessToken); // 하위 호환성
       storage.setItem('user', JSON.stringify(user));
 
       dispatch({
@@ -147,8 +151,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       // 양쪽 스토리지 모두 정리
       localStorage.removeItem('token');
+      localStorage.removeItem('userToken');
+      localStorage.removeItem('accessToken');
       localStorage.removeItem('user');
       sessionStorage.removeItem('token');
+      sessionStorage.removeItem('userToken');
+      sessionStorage.removeItem('accessToken');
       sessionStorage.removeItem('user');
       dispatch({ type: 'LOGOUT' });
     }
@@ -167,6 +175,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // rememberMe에 따라 localStorage 또는 sessionStorage 사용 (카카오는 기본 true)
       const storage = rememberMe ? localStorage : sessionStorage;
       storage.setItem('token', response.accessToken);
+      storage.setItem('userToken', response.accessToken); // SNS용 userToken도 저장
+      storage.setItem('accessToken', response.accessToken); // 하위 호환성
       storage.setItem('user', JSON.stringify(user));
 
       dispatch({
