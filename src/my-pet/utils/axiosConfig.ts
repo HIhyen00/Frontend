@@ -3,12 +3,7 @@ import type { AxiosInstance, InternalAxiosRequestConfig, AxiosError } from 'axio
 import { setupResponseInterceptor } from '../../shared/utils/axiosInterceptors';
 
 // API 기본 URL 설정
-const PETLIFECYCLE_API_BASE_URL = import.meta.env.VITE_PETLIFECYCLE_API_BASE_URL || 'http://localhost:8003';
-const BASE_URL = '/api';
-
-// 개발 환경에서 사용할 테스트 토큰 (프로덕션에서는 절대 사용 금지!)
-const USE_TEST_TOKEN = import.meta.env.VITE_USE_TEST_TOKEN === 'true';
-const TEST_TOKEN = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.token';
+const BASE_URL = import.meta.env.VITE_PETLIFECYCLE_API_BASE_URL ||'/api';
 
 // Axios 인스턴스 생성
 const axiosInstance: AxiosInstance = axios.create({
@@ -20,7 +15,7 @@ const axiosInstance: AxiosInstance = axios.create({
     withCredentials: true,
 });
 
-// 요청 인터셉터 (테스트 모드 지원 + FormData 처리)
+// 요청 인터셉터
 axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         if (config.headers) {
@@ -29,47 +24,29 @@ axiosInstance.interceptors.request.use(
                 console.log('FormData 요청 감지 - Content-Type 자동 설정');
             }
 
-            // 테스트 모드일 경우 테스트 토큰 사용
-            if (USE_TEST_TOKEN) {
-                config.headers.Authorization = TEST_TOKEN;
-                console.log('[DEV MODE] Using test token');
-            } else {
-                // 일반 모드: localStorage 또는 sessionStorage에서 토큰 가져오기
-                let token = localStorage.getItem('token');
-                if (!token) {
-                    token = sessionStorage.getItem('token');
-                }
+            let token = localStorage.getItem('token');
+            if (!token) {
+                token = sessionStorage.getItem('token');
+            }
 
-                if (token && token !== 'undefined' && token !== 'null') {
-                    config.headers.Authorization = `Bearer ${token}`;
-                }
+            if (token && token !== 'undefined' && token !== 'null') {
+                config.headers.Authorization = `Bearer ${token}`;
+                console.log('Authorization 헤더 추가:', `Bearer ${token.substring(0, 20)}...`);
+            } else {
+                console.warn('⚠️ 토큰이 없습니다. 인증이 필요한 요청은 실패할 수 있습니다.');
             }
         }
 
         return config;
     },
-    (error: AxiosError) => Promise.reject(error)
+    (error: AxiosError) => {
+        console.error('❌ 요청 인터셉터 에러:', error);
+        return Promise.reject(error);
+    }
 );
 
-// 응답 인터셉터 (공통 유틸리티 사용, 테스트 모드에서는 401 리다이렉트 제외)
-if (!USE_TEST_TOKEN) {
-    setupResponseInterceptor(axiosInstance);
-} else {
-    // 테스트 모드에서는 에러 로깅만
-    axiosInstance.interceptors.response.use(
-        (response) => response,
-        (error: AxiosError) => {
-            if (error.response) {
-                console.error('❌ API Error:', error.response.status, error.response.data);
-            } else if (error.request) {
-                console.error('❌ Network Error:', error.request);
-            } else {
-                console.error('❌ Error:', error.message);
-            }
-            return Promise.reject(error);
-        }
-    );
-}
+// 응답 인터셉터 (공통 유틸리티 사용)
+setupResponseInterceptor(axiosInstance);
 
 // 범용 CRUD 헬퍼 함수들
 export const apiHelper = {

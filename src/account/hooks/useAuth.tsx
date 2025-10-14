@@ -113,6 +113,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const user = {
         accountId: response.userId,
         username: response.username,
+        role: response.role,
       };
 
       // rememberMe에 따라 localStorage 또는 sessionStorage 사용
@@ -170,6 +171,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const user = {
         accountId: response.userId,
         username: response.username,
+        role: response.role,
       };
 
       // rememberMe에 따라 localStorage 또는 sessionStorage 사용 (카카오는 기본 true)

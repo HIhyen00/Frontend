@@ -118,7 +118,7 @@ export const medicalRecordApi = {
         perPage: number = 10
     ): Promise<ListMedicalRecordResponse> => {
         const response = await axiosInstance.get<ListMedicalRecordResponse>(
-            `/pet/${petId}/medical-record`,
+            `/pets/${petId}/medical-records`,
             { params: { page, perPage } }
         );
         return response.data;
@@ -130,7 +130,7 @@ export const medicalRecordApi = {
         recordId: number
     ): Promise<ReadMedicalRecordResponse> => {
         const response = await axiosInstance.get<ReadMedicalRecordResponse>(
-            `/pet/${petId}/medical-record/${recordId}`
+            `/pets/${petId}/medical-records/${recordId}`
         );
         return response.data;
     },
@@ -141,7 +141,7 @@ export const medicalRecordApi = {
         data: RegisterMedicalRecordRequest
     ): Promise<string> => {
         const response = await axiosInstance.post<string>(
-            `/pet/${petId}/medical-record`,
+            `/pets/${petId}/medical-records`,
             data
         );
         return response.data;
@@ -154,7 +154,7 @@ export const medicalRecordApi = {
         data: UpdateMedicalRecordRequest
     ): Promise<string> => {
         const response = await axiosInstance.put<string>(
-            `/pet/${petId}/medical-record/${recordId}`,
+            `/pets/${petId}/medical-records/${recordId}`,
             data
         );
         return response.data;
@@ -166,7 +166,7 @@ export const medicalRecordApi = {
         recordId: number
     ): Promise<string> => {
         const response = await axiosInstance.delete<string>(
-            `/pet/${petId}/medical-record/${recordId}`
+            `/pets/${petId}/medical-records/${recordId}`
         );
         return response.data;
     },
@@ -180,7 +180,7 @@ export const medicalRecordApi = {
         formData.append('file', file);
 
         const response = await axiosInstance.post<ReceiptAnalysisResponse>(
-            `/pet/${petId}/medical-record/analyze-receipt`,
+            `/pets/${petId}/medical-records/analyze-receipt`,
             formData
         );
         return response.data;
@@ -217,7 +217,7 @@ export const medicalRecordApi = {
 
         try {
             const response = await axiosInstance.post<FileUploadResponse>(
-                '/pet/files/upload',
+                '/pets/files/upload',
                 formData
             );
             console.log('✅ 업로드 성공:', response.data);
@@ -234,7 +234,7 @@ export const medicalRecordApi = {
     // 파일 삭제
     deleteFile: async (fileId: number): Promise<string> => {
         const response = await axiosInstance.delete<string>(
-            `/pet/files/${fileId}`
+            `/pets/files/${fileId}`
         );
         return response.data;
     }
