@@ -140,7 +140,7 @@ const PetProfileCard: React.FC<PetProfileCardProps> = ({ pet, onEdit, onOpenConf
                 <div className="mt-6 pt-6 border-t border-gray-200 flex justify-around">
                     <div className="flex flex-col items-center cursor-pointer text-center w-20" onClick={() => navigate(`/memories/${pet.id}`)}>
                         <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center text-blue-500 text-2xl mb-2"><i className="fa-solid fa-book-medical"></i></div>
-                        <span className="text-sm text-gray-600">건강 기록</span>
+                        <span className="text-sm text-gray-600">추억 기록</span>
                     </div>
                     <div className="flex flex-col items-center cursor-pointer text-center w-20" onClick={() => navigate(`/medical-record/${pet.id}`)}>
                         <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center text-green-500 text-2xl mb-2"><i className="fa-solid fa-stethoscope"></i></div>

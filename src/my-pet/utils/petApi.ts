@@ -63,12 +63,12 @@ export interface UpdatePetAccountResponse {
 // ==================== API 서비스 ====================
 
 export const petApi = {
-    // 펫 등록, POST /api/pet/profile
+    // 펫 등록, POST /api/pets/profiles
     registerPet: async (request: RegisterPetAccountRequest): Promise<RegisterPetAccountResponse> => {
         const formData = createPetFormData(request);
 
         const response = await axiosInstance.post<RegisterPetAccountResponse>(
-            '/pet/profile',
+            '/pets/profiles',
             formData,
             {
                 headers: {
@@ -80,24 +80,24 @@ export const petApi = {
         return response.data;
     },
 
-    // 펫 목록 조회, GET /api/pet/profile
+    // 펫 목록 조회, GET /api/pets/profiles
     getAllPets: async (): Promise<PetAccountResponse[]> => {
-        const response = await axiosInstance.get<ListPetAccountResponse>('/pet/profile');
+        const response = await axiosInstance.get<ListPetAccountResponse>('/pets/profiles');
         return response.data.pets;
     },
 
-    // 특정 펫 조회, GET /api/pet/profile/{petId}
+    // 특정 펫 조회, GET /api/pets/profiles/{petId}
     getPet: async (petId: number): Promise<PetAccountResponse> => {
-        const response = await axiosInstance.get<PetAccountResponse>(`/pet/profile/${petId}`);
+        const response = await axiosInstance.get<PetAccountResponse>(`/pets/profiles/${petId}`);
         return response.data;
     },
 
-    // 펫 정보 수정, PUT /api/pet/profile/{petId}
+    // 펫 정보 수정, PUT /api/pets/profiles/{petId}
     updatePet: async (petId: number, request: UpdatePetAccountRequest): Promise<UpdatePetAccountResponse> => {
         const formData = createPetFormData(request, true);
 
         const response = await axiosInstance.put<UpdatePetAccountResponse>(
-            `/pet/profile/${petId}`,
+            `/pets/profiles/${petId}`,
             formData,
             {
                 headers: {
@@ -109,19 +109,19 @@ export const petApi = {
         return response.data;
     },
 
-    // 펫 삭제, DELETE /api/pet/profile/{petId}
+    // 펫 삭제, DELETE /api/pets/profiles/{petId}
     deletePet: async (petId: number): Promise<string> => {
-        const response = await axiosInstance.delete<string>(`/pet/profile/${petId}`);  // 수정
+        const response = await axiosInstance.delete<string>(`/pets/profiles/${petId}`);  // 수정
         return response.data;
     },
 
-    // 프로필 이미지만 업로드 (기존 API가 있다면)
+    // 프로필 이미지만 업로드
     uploadProfileImage: async (petId: number, file: File): Promise<any> => {
         const formData = new FormData();
         formData.append('file', file);
 
         const response = await axiosInstance.post(
-            `/pet/profile/${petId}/profile-image`,
+            `/pets/profiles/${petId}/profile-image`,
             formData,
             {
                 headers: {
@@ -133,13 +133,13 @@ export const petApi = {
         return response.data;
     },
 
-    // 등록증만 업로드 (기존 API가 있다면)
+    // 등록증만 업로드
     uploadRegistration: async (petId: number, file: File): Promise<any> => {
         const formData = new FormData();
         formData.append('file', file);
 
         const response = await axiosInstance.post(
-            `/pet/profile/${petId}/registration`,
+            `/pets/profiles/${petId}/registration`,
             formData,
             {
                 headers: {
@@ -154,9 +154,9 @@ export const petApi = {
 
 // 품종(Breed) API
 export const breedApi = {
-    // 품종 목록 조회, GET /api/pet/breed?species=...
+    // 품종 목록 조회, GET /api/pets/breeds?species=...
     getBreeds: async (species?: Species): Promise<any[]> => {
-        const response = await axiosInstance.get('/admin/pet/breed/dropdown', { params: {species} });  // 수정
+        const response = await axiosInstance.get('/pets/breeds/dropdown', { params: {species} });
         if (response.data && Array.isArray(response.data.breedList)) {
             return response.data.breedList;
         }

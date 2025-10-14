@@ -86,54 +86,54 @@ export interface ListVacRecordResponse {
 
 export const vaccinationRecordApi = {
 
-    // 백신 접종 기록 등록, POST /api/pet/{petId}/vac-record/register
+    // 백신 접종 기록 등록, POST /api/pets/{petId}/vac-records/register
     register: async (
         petId: number,
         data: RegisterVacRecordRequest
     ): Promise<string> => {
         const response = await axiosInstance.post<string>(
-            `/pet/${petId}/vac-record`,
+            `/pets/${petId}/vac-records`,
             data
         );
         return response.data;
     },
 
-    // 백신 접종 기록 단건 조회, GET /api/pet/{petId}/vac-record/{recordId}
+    // 백신 접종 기록 단건 조회, GET /api/pets/{petId}/vac-records/{recordId}
     getById: async (
         petId: number,
         recordId: number
     ): Promise<ReadVacRecordResponse> => {
         const response = await axiosInstance.get<ReadVacRecordResponse>(
-            `/pet/${petId}/vac-record/${recordId}`
+            `/pets/${petId}/vac-records/${recordId}`
         );
         return response.data;
     },
 
-    // 백신 접종 기록 목록 조회, GET /api/pet/{petId}/vac-record
+    // 백신 접종 기록 목록 조회, GET /api/pets/{petId}/vac-records
     getList: async (petId: number): Promise<ListVacRecordResponse> => {
         const response = await axiosInstance.get<ListVacRecordResponse>(
-            `/pet/${petId}/vac-record`
+            `/pets/${petId}/vac-records`
         );
         return response.data;
     },
 
-    // 백신 접종 기록 수정, PUT /api/pet/{petId}/vac-record/{recordId}
+    // 백신 접종 기록 수정, PUT /api/pets/{petId}/vac-records/{recordId}
     update: async (
         petId: number,
         recordId: number,
         data: UpdateVacRecordRequest
     ): Promise<string> => {
         const response = await axiosInstance.put<string>(
-            `/pet/${petId}/vac-record/${recordId}`,
+            `/pets/${petId}/vac-records/${recordId}`,
             data
         );
         return response.data;
     },
 
-    // 백신 접종 기록 삭제, DELETE /api/pet/{petId}/vac-record/{recordId}
+    // 백신 접종 기록 삭제, DELETE /api/pets/{petId}/vac-records/{recordId}
     delete: async (petId: number, recordId: number): Promise<string> => {
         const response = await axiosInstance.delete<string>(
-            `/pet/${petId}/vac-record/${recordId}`
+            `/pets/${petId}/vac-records/${recordId}`
         );
         return response.data;
     },

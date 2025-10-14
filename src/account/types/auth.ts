@@ -1,6 +1,7 @@
 export interface User {
   accountId: number;
   username: string;
+  role: string;
   name?: string;
   phoneNumber?: string;
 }
@@ -14,6 +15,7 @@ export interface LoginResponse {
   accessToken: string;
   userId: number;
   username: string;
+  role: string;
   expiresIn: string; // Duration from backend will be converted to string
 }
 

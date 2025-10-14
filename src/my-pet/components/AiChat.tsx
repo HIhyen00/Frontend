@@ -30,7 +30,7 @@ const AiChat: React.FC<AiChatProps> = ({ reportId }) => {
         setIsLoading(true);
 
         try {
-            const response = await apiClient.post<{ answer: string }>(`/health-reports/${reportId}/ask-ai`, { question });
+            const response = await apiClient.post<{ answer: string }>(`/pets/{petId}/health-reports/${reportId}/ask-ai`, { question });
             const aiMessage: Message = { sender: 'ai', text: response.answer };
             setMessages(prev => [...prev, aiMessage]);
         } catch (error) {
