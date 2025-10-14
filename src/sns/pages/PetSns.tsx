@@ -1,106 +1,144 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    FaDog,
-    FaCat,
     FaHeart,
-    FaWalking,
-    FaBaby,
-    FaStar, FaEllipsisH, FaComment, FaShare, FaBookmark
+    FaComment,
+    FaShare,
+    FaPlus,
+    FaUser
 } from 'react-icons/fa';
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from 'react-icons/md';
-
-interface Post {
-    id: number;
-    username: string;
-    userImage: string;
-    image: string;
-    caption: string;
-    likes: number;
-    comments: number;
-    timestamp: string;
-    tags: string[];
-}
+import { postApi } from '../api/snsApi';
+import type { Post } from '../types/post.types';
+import CreatePostModal from '../components/CreatePostModal';
+import { useAuth } from '../../shared/hooks/useAuth';
 
 function PetSns() {
+    const { isAuthenticated } = useAuth();
     const [currentIndex, setCurrentIndex] = useState(0);
     const [direction, setDirection] = useState(0);
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-    const categories = [
-        { name: "강아지", icon: <FaDog />, image: "/images/friends.jpg" },
-        { name: "고양이", icon: <FaCat />, image: "/images/share.jpg" },
-        { name: "개냥이", icon: <FaHeart />, image: "/images/like.jpg" }, // '사랑스러운 반려동물' 느낌
-        { name: "산책", icon: <FaWalking />, image: "/images/walk.jpg" }, // 산책, 걷기
-        { name: "아기고양이", icon: <FaBaby />, image: "/images/calendar.jpg" }, // 아기 냥이
-        { name: "재롱", icon: <FaStar />, image: "/images/management.jpg" }, // 귀여운 재롱
-    ];
+    // 시간 포맷 헬퍼 함수
+    const formatTimeAgo = (dateString: string): string => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInMs = now.getTime() - date.getTime();
+        const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+        const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+        const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
-    // 샘플 데이터 생성
+        if (diffInMinutes < 60) {
+            return `${diffInMinutes}분 전`;
+        } else if (diffInHours < 24) {
+            return `${diffInHours}시간 전`;
+        } else {
+            return `${diffInDays}일 전`;
+        }
+    };
+
+    // ESC 키로 전체 화면 닫기
     useEffect(() => {
-        // 실제 앱에서는 API에서 데이터를 가져오게 됩니다
-        const samplePosts: Post[] = [
-            {
-                id: 1,
-                username: '멍멍이와함께',
-                userImage: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 100)}.jpg`,
-                image: `https://source.unsplash.com/800x1000/?dog,pet/${Math.random()}`,
-                caption: '오늘 공원에서 산책하는 우리 댕댕이 너무 귀엽죠? 🐶 #강아지 #산책 #행복한하루',
-                likes: 1243,
-                comments: 42,
-                timestamp: '2시간 전',
-                tags: ['강아지', '산책', '행복한하루']
-            },
-            {
-                id: 2,
-                username: '고양이집사',
-                userImage: `https://randomuser.me/api/portraits/women/${Math.floor(Math.random() * 100)}.jpg`,
-                image: `https://source.unsplash.com/800x1000/?cat,pet/${Math.random()}`,
-                caption: '창가에서 일광욕 중인 우리 냥이 😻 #고양이 #일광욕 #집냥이',
-                likes: 2567,
-                comments: 89,
-                timestamp: '4시간 전',
-                tags: ['고양이', '일광욕', '집냥이']
-            },
-            {
-                id: 3,
-                username: '햄스터마스터',
-                userImage: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 100)}.jpg`,
-                image: `https://source.unsplash.com/800x1000/?hamster,pet/${Math.random()}`,
-                caption: '햄스터 휠 위에서 열심히 뛰는 중! 귀여워 죽겠어요 🐹 #햄스터 #귀염둥이 #소동물',
-                likes: 876,
-                comments: 23,
-                timestamp: '6시간 전',
-                tags: ['햄스터', '귀염둥이', '소동물']
-            },
-            {
-                id: 4,
-                username: '토끼사랑',
-                userImage: `https://randomuser.me/api/portraits/women/${Math.floor(Math.random() * 100)}.jpg`,
-                image: `https://source.unsplash.com/800x1000/?rabbit,pet/${Math.random()}`,
-                caption: '당근을 먹는 우리 토끼 🐰 너무 행복해 보이죠? #토끼 #당근 #반려동물',
-                likes: 1532,
-                comments: 56,
-                timestamp: '12시간 전',
-                tags: ['토끼', '당근', '반려동물']
-            },
-            {
-                id: 5,
-                username: '앵무새친구',
-                userImage: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 100)}.jpg`,
-                image: `https://source.unsplash.com/800x1000/?parrot,bird/${Math.random()}`,
-                caption: '오늘도 수다쟁이 앵무새와 대화 중 🦜 말을 너무 잘해요! #앵무새 #반려조 #수다쟁이',
-                likes: 943,
-                comments: 31,
-                timestamp: '1일 전',
-                tags: ['앵무새', '반려조', '수다쟁이']
-            },
-        ];
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isFullscreen) {
+                setIsFullscreen(false);
+            }
+        };
+        
+        window.addEventListener('keydown', handleEscape);
+        return () => window.removeEventListener('keydown', handleEscape);
+    }, [isFullscreen]);
 
-        setPosts(samplePosts);
-        setLoading(false);
+    // 실제 API에서 데이터 가져오기
+    const fetchPosts = async () => {
+        try {
+            setLoading(true);
+            // 랜덤 게시물 또는 모든 게시물 가져오기
+            const data = await postApi.getRandomPosts();
+            console.log('=== 게시물 조회 완료 ===');
+            console.log('전체 데이터:', data);
+            console.log('모든 게시물의 isLiked 상태:', data.map(p => ({
+                id: p.id,
+                isLiked: p.isLiked,
+                isLiked타입: typeof p.isLiked,
+                likeCount: p.likeCount
+            })));
+            console.log('로그인 상태:', isAuthenticated);
+            setPosts(data);
+        } catch (error) {
+            console.error('게시물을 불러오는데 실패했습니다:', error);
+            // 에러 시 빈 배열로 설정
+            setPosts([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchPosts();
     }, []);
+
+    // 좋아요 토글 함수
+    const handleLikeToggle = async (postId: number, isLiked: boolean) => {
+        if (!isAuthenticated) {
+            alert('로그인이 필요합니다.');
+            return;
+        }
+
+        try {
+            console.log('좋아요 토글:', { postId, isLiked, action: isLiked ? 'unlike' : 'like' });
+            
+            // 낙관적 업데이트 (즉시 UI 반영)
+            setPosts(prevPosts => prevPosts.map(post => {
+                if (post.id === postId) {
+                    console.log('게시물 업데이트:', {
+                        id: post.id,
+                        이전_isLiked: post.isLiked,
+                        이전_likeCount: post.likeCount,
+                        새로운_isLiked: !isLiked,
+                        새로운_likeCount: isLiked ? post.likeCount - 1 : post.likeCount + 1
+                    });
+                    return {
+                        ...post,
+                        isLiked: !isLiked,
+                        likeCount: isLiked ? post.likeCount - 1 : post.likeCount + 1
+                    };
+                }
+                return post;
+            }));
+            
+            // 백엔드 API 호출 (동기화)
+            if (isLiked) {
+                await postApi.unlikePost(postId);
+                console.log('좋아요 취소 API 완료');
+            } else {
+                await postApi.likePost(postId);
+                console.log('좋아요 추가 API 완료');
+            }
+            
+            // fetchPosts()를 호출하지 않음 - 랜덤 게시물이 바뀌는 것을 방지
+            console.log('UI 업데이트 완료 (서버 동기화 완료)');
+        } catch (error: any) {
+            console.error('좋아요 처리 실패:', error);
+            console.error('에러 상세:', error.response?.data);
+            
+            // 에러 발생 시 원래 상태로 되돌림
+            setPosts(prevPosts => prevPosts.map(post => {
+                if (post.id === postId) {
+                    return {
+                        ...post,
+                        isLiked: isLiked,
+                        likeCount: isLiked ? post.likeCount + 1 : post.likeCount - 1
+                    };
+                }
+                return post;
+            }));
+            alert('좋아요 처리에 실패했습니다.');
+        }
+    };
 
     const paginate = (newDirection: number) => {
         setDirection(newDirection);
@@ -159,10 +197,72 @@ function PetSns() {
         );
     }
 
+    if (posts.length === 0) {
+        return (
+            <div className="pt-28 pb-28 min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+                <div className="text-center max-w-md mx-auto px-4">
+                    <div className="bg-white rounded-3xl shadow-xl p-12">
+                        <p className="text-6xl mb-6">📭</p>
+                        <h2 className="text-3xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
+                            게시물이 없습니다
+                        </h2>
+                        <p className="text-gray-600 text-lg mb-8">첫 번째 게시물을 작성해보세요!</p>
+                        {isAuthenticated && (
+                            <button
+                                onClick={() => setIsCreateModalOpen(true)}
+                                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full font-bold hover:shadow-lg hover:shadow-purple-500/50 transition-all hover:scale-105"
+                            >
+                                게시물 작성하기
+                            </button>
+                        )}
+                    </div>
+                </div>
+                <CreatePostModal
+                    isOpen={isCreateModalOpen}
+                    onClose={() => setIsCreateModalOpen(false)}
+                    onPostCreated={fetchPosts}
+                />
+            </div>
+        );
+    }
+
     return (
-        <div className="pt-28 pb-28 min-h-screen bg-violet-500">
-            <div className="max-w-1/2 mx-auto relative h-[calc(100vh-8rem)]">
-                <div className="relative w-full h-full overflow-hidden">
+        <>
+        <div className="pt-20 pb-20 min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+            {/* 우측 하단 버튼 그룹 */}
+            <div className="fixed bottom-8 right-8 z-40 flex flex-col space-y-3">
+                {/* 나의 게시물 버튼 */}
+                {isAuthenticated && (
+                    <button
+                        onClick={() => window.location.href = '/sns/my-posts'}
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full p-4 shadow-lg hover:shadow-blue-500/50 transition-all hover:scale-110 backdrop-blur-sm"
+                        title="나의 게시물"
+                    >
+                        <FaUser size={24} />
+                    </button>
+                )}
+                
+                {/* 게시물 작성 버튼 */}
+                <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full p-4 shadow-lg hover:shadow-purple-500/50 transition-all hover:scale-110 backdrop-blur-sm"
+                    title={isAuthenticated ? "게시물 작성" : "로그인이 필요합니다"}
+                >
+                    <FaPlus size={24} />
+                </button>
+            </div>
+
+            {/* Hero Section */}
+            <div className="container mx-auto px-4 mb-12">
+                <div className="text-center mb-8">
+
+
+                </div>
+            </div>
+
+            {/* Main Feed */}
+            <div className="max-w-4xl mx-auto px-4 relative mb-16">
+                <div className="relative w-full h-[600px] overflow-hidden rounded-3xl shadow-2xl bg-white">
                     <AnimatePresence initial={false} custom={direction}>
                         <motion.div
                             key={currentIndex}
@@ -189,92 +289,107 @@ function PetSns() {
                             className="absolute w-full h-full"
                         >
                             {posts[currentIndex] && (
-                                <div className="w-full h-full bg-white rounded-lg overflow-hidden shadow-lg flex flex-col">
-                                    {/* 헤더 */}
-                                    <div className="p-4 flex items-center justify-between">
-                                        <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-purple-500 p-0.5">
-                                                <img
-                                                    src={posts[currentIndex].userImage}
-                                                    alt={posts[currentIndex].username}
-                                                    className="w-full h-full object-cover rounded-full"
-                                                />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-semibold text-gray-800">{posts[currentIndex].username}</h3>
-                                                <p className="text-xs text-gray-500">{posts[currentIndex].timestamp}</p>
+                                <div 
+                                    className="w-full h-full relative overflow-hidden group cursor-pointer"
+                                    onDoubleClick={() => setIsFullscreen(true)}
+                                >
+                                    {/* 배경 이미지 */}
+                                    {posts[currentIndex].image ? (
+                                        <img
+                                            src={posts[currentIndex].image}
+                                            alt="Post"
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.currentTarget.src = 'https://via.placeholder.com/800x600/9333ea/ffffff?text=No+Image';
+                                            }}
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+                                            <div className="text-center text-white">
+                                                <p className="text-6xl mb-4">🐾</p>
+                                                <p className="text-xl font-bold">{posts[currentIndex].title}</p>
                                             </div>
                                         </div>
-                                        <button className="text-gray-500 hover:text-gray-700">
-                                            <FaEllipsisH />
-                                        </button>
+                                    )}
+                                    
+                                    {/* 그라데이션 오버레이 - 기본 약하게, 호버 시 진하게 */}
+                                    <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/40 group-hover:from-black/60 group-hover:to-black/80 transition-all duration-300"></div>
+                                    
+                                    {/* 좌측 상단 - 사용자 정보 - 호버 시에만 표시 */}
+                                    <div className="absolute top-6 left-6 flex items-center space-x-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-lg">
+                                            <img
+                                                src={posts[currentIndex].profileImage || 'https://via.placeholder.com/150'}
+                                                alt={posts[currentIndex].nickname}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-white text-lg drop-shadow-lg">{posts[currentIndex].nickname}</h3>
+                                            <p className="text-xs text-white/90 drop-shadow-md">{formatTimeAgo(posts[currentIndex].createdAt)}</p>
+                                        </div>
                                     </div>
                                     
-                                    {/* 이미지 */}
-                                    <div className="flex-1 relative overflow-hidden flex items-center justify-center">
-                                        {/*<img */}
-                                        {/*    src={posts[currentIndex].image} */}
-                                        {/*    alt="Post"*/}
-                                        {/*    className="w-full h-full object-cover"*/}
-                                        {/*/>*/}
-                                        이미지
-                                        
-                                        {/* 좌우 화살표 */}
-                                        <button 
-                                            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 rounded-full p-2 text-gray-800 hover:bg-opacity-70 transition-all"
-                                            onClick={() => paginate(-1)}
-                                        >
-                                            <MdKeyboardArrowLeft size={24} />
-                                        </button>
-                                        <button 
-                                            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 rounded-full p-2 text-gray-800 hover:bg-opacity-70 transition-all"
-                                            onClick={() => paginate(1)}
-                                        >
-                                            <MdKeyboardArrowRight size={24} />
-                                        </button>
-                                    </div>
-                                    
-                                    {/* 액션 버튼 */}
-                                    <div className="p-4 ">
-                                        <div className="flex justify-between mb-3">
-                                            <div className="flex space-x-4">
-                                                <button className="text-red-500 hover:text-red-600 transition-colors">
-                                                    <FaHeart size={24} />
-                                                </button>
-                                                <button className="text-blue-500 hover:text-blue-600 transition-colors">
-                                                    <FaComment size={24} />
-                                                </button>
-                                                <button className="text-green-500 hover:text-green-600 transition-colors">
-                                                    <FaShare size={24} />
-                                                </button>
-                                            </div>
-                                            <button className="text-gray-700 hover:text-gray-900 transition-colors">
-                                                <FaBookmark size={24} />
+                                    {/* 우측 - 액션 버튼 (세로 배치) - 호버 시에만 표시 */}
+                                    <div className="absolute right-6 bottom-10 flex flex-col items-center space-y-6 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <div className="flex flex-col items-center">
+                                            <button 
+                                                onClick={() => {
+                                                    console.log('메인 피드 하트 클릭:', { 
+                                                        postId: posts[currentIndex].id, 
+                                                        isLiked: posts[currentIndex].isLiked,
+                                                        isLiked타입: typeof posts[currentIndex].isLiked,
+                                                        likeCount: posts[currentIndex].likeCount 
+                                                    });
+                                                    handleLikeToggle(posts[currentIndex].id, posts[currentIndex].isLiked);
+                                                }}
+                                                className={`hover:scale-110 transition-transform drop-shadow-lg ${
+                                                    posts[currentIndex].isLiked ? 'text-red-500' : 'text-white'
+                                                }`}
+                                            >
+                                                <FaHeart size={32} />
                                             </button>
+                                            <span className="text-white text-sm font-semibold mt-1 drop-shadow-md">{formatNumber(posts[currentIndex].likeCount)}</span>
                                         </div>
                                         
-                                        {/* 좋아요 수 */}
-                                        <p className="font-semibold text-gray-800 mb-1">
-                                            좋아요 {formatNumber(posts[currentIndex].likes)}개
+                                        <div className="flex flex-col items-center">
+                                            <button className="text-white hover:scale-110 transition-transform drop-shadow-lg">
+                                                <FaComment size={32} />
+                                            </button>
+                                            <span className="text-white text-sm font-semibold mt-1 drop-shadow-md">{posts[currentIndex].commentCount}</span>
+                                        </div>
+                                        
+                                        <button className="text-white hover:scale-110 transition-transform drop-shadow-lg">
+                                            <FaShare size={32} />
+                                        </button>
+                                    </div>
+                                    
+                                    {/* 하단 - 캡션 및 태그 - 호버 시에만 표시 */}
+                                    <div className="absolute bottom-6 left-6 right-24 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <p className="text-white text-base mb-2 drop-shadow-lg line-clamp-2">
+                                            <span className="font-bold">{posts[currentIndex].nickname}</span> {posts[currentIndex].content}
                                         </p>
                                         
-                                        {/* 캡션 */}
-                                        <p className="text-gray-800 mb-2">
-                                            <span className="font-semibold">{posts[currentIndex].username}</span> {posts[currentIndex].caption}
-                                        </p>
-                                        
-                                        {/* 태그 */}
-                                        <div className="flex flex-wrap gap-1 mb-2">
-                                            {posts[currentIndex].tags.map((tag, index) => (
-                                                <span key={index} className="text-blue-500 text-sm">#{tag}</span>
+                                        <div className="flex flex-wrap gap-2">
+                                            {posts[currentIndex].hashtags.map((tag: string, index: number) => (
+                                                <span key={index} className="text-white/90 text-sm font-medium drop-shadow-md">#{tag}</span>
                                             ))}
                                         </div>
-                                        
-                                        {/* 댓글 수 */}
-                                        <p className="text-gray-500 text-sm">
-                                            댓글 {posts[currentIndex].comments}개 모두 보기
-                                        </p>
                                     </div>
+                                    
+                                    {/* 좌우 화살표 - 호버 시에만 표시 */}
+                                    <button 
+                                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm rounded-full p-3 text-white hover:bg-white/30 transition-all z-30 opacity-0 group-hover:opacity-100"
+                                        onClick={() => paginate(-1)}
+                                    >
+                                        <MdKeyboardArrowLeft size={28} />
+                                    </button>
+                                    <button 
+                                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm rounded-full p-3 text-white hover:bg-white/30 transition-all z-30 opacity-0 group-hover:opacity-100"
+                                        onClick={() => paginate(1)}
+                                    >
+                                        <MdKeyboardArrowRight size={28} />
+                                    </button>
                                 </div>
                             )}
                         </motion.div>
@@ -282,11 +397,13 @@ function PetSns() {
                 </div>
                 
                 {/* 페이지 인디케이터 */}
-                <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
+                <div className="absolute -bottom-8 left-0 right-0 flex justify-center space-x-2">
                     {posts.map((_, index) => (
-                        <div 
+                        <button 
                             key={index} 
-                            className={`w-2 h-2 rounded-full ${index === currentIndex ? 'bg-purple-600' : 'bg-gray-300'}`}
+                            className={`w-2 h-2 rounded-full transition-all ${
+                                index === currentIndex ? 'bg-white w-8' : 'bg-white/50'
+                            }`}
                             onClick={() => {
                                 setDirection(index > currentIndex ? 1 : -1);
                                 setCurrentIndex(index);
@@ -297,31 +414,72 @@ function PetSns() {
 
             </div>
 
-            <section className="py-16 pt-36 bg-violet-500">
-                <div className="container mx-auto px-4">
-                    <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">
-                        카테고리
-                    </h2>
+            {/* Instagram 피드 스타일 그리드 */}
+            <section className="py-16 bg-white">
+                <div className="container mx-auto px-4 max-w-6xl">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
+                            모든 게시물
+                        </h2>
+                        <p className="text-gray-600">다양한 반려동물들의 이야기를 만나보세요</p>
+                    </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {categories.map((cat, idx) => (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {posts.map((post) => (
                             <div
-                                key={idx}
-                                className="relative cursor-pointer group rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300"
+                                key={post.id}
+                                className="relative w-full cursor-pointer group overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 bg-gray-100"
+                                style={{ paddingBottom: '100%' }}
+                                onClick={() => {
+                                    const index = posts.findIndex(p => p.id === post.id);
+                                    setDirection(index > currentIndex ? 1 : -1);
+                                    setCurrentIndex(index);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
                             >
-                                {/* 배경 이미지 */}
-                                <div
-                                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                                    style={{ backgroundImage: `url(${cat.image})` }}
-                                ></div>
-
-                                {/* 오버레이 */}
-                                <div className="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-20 transition-colors duration-300"></div>
-
-                                {/* 텍스트 & 아이콘 */}
-                                <div className="relative z-10 flex flex-col items-center justify-center h-64 text-white text-center p-4">
-                                    <div className="text-4xl mb-4">{cat.icon}</div>
-                                    <h3 className="text-xl font-semibold">{cat.name}</h3>
+                                {/* 이미지 */}
+                                {post.image ? (
+                                    <img
+                                        src={post.image}
+                                        alt={post.content}
+                                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 z-10"
+                                        onError={(e) => {
+                                            console.error('이미지 로드 실패:', post.image);
+                                            e.currentTarget.src = 'https://via.placeholder.com/400x400/9333ea/ffffff?text=No+Image';
+                                        }}
+                                        onLoad={() => console.log('이미지 로드 성공:', post.image)}
+                                    />
+                                ) : (
+                                    <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+                                        <div className="text-center text-white">
+                                            <p className="text-4xl mb-2">🐾</p>
+                                            <p className="text-xs font-bold px-2">{post.title}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {/* 호버 오버레이 */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
+                                    <div className="flex items-center space-x-6 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                console.log('그리드 하트 클릭:', { postId: post.id, isLiked: post.isLiked, likeCount: post.likeCount });
+                                                handleLikeToggle(post.id, post.isLiked);
+                                            }}
+                                            className="flex items-center space-x-2 hover:scale-110 transition-transform"
+                                        >
+                                            <FaHeart 
+                                                size={28} 
+                                                className={`drop-shadow-lg ${post.isLiked ? 'text-red-500' : 'text-white'}`}
+                                            />
+                                            <span className="font-bold text-xl drop-shadow-lg">{formatNumber(post.likeCount)}</span>
+                                        </button>
+                                        <div className="flex items-center space-x-2">
+                                            <FaComment size={28} className="drop-shadow-lg" />
+                                            <span className="font-bold text-xl drop-shadow-lg">{post.commentCount}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -331,6 +489,113 @@ function PetSns() {
 
 
         </div>
+        
+        {/* 전체 화면 모달 */}
+        {isFullscreen && (
+            <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+                {/* 닫기 버튼 */}
+                <button
+                    className="absolute top-6 right-6 text-white text-4xl hover:text-gray-300 transition-colors z-50"
+                    onClick={() => setIsFullscreen(false)}
+                >
+                    ×
+                </button>
+                
+                {/* 이미지 */}
+                <div className="relative w-full h-full flex items-center justify-center">
+                    <img
+                        src={posts[currentIndex].image}
+                        alt="Post"
+                        className="max-w-full max-h-full object-contain"
+                        onDoubleClick={() => setIsFullscreen(false)}
+                    />
+                    
+                    {/* 좌우 화살표 */}
+                    <button 
+                        className="absolute left-6 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm rounded-full p-4 text-white hover:bg-white/30 transition-all"
+                        onClick={() => paginate(-1)}
+                    >
+                        <MdKeyboardArrowLeft size={36} />
+                    </button>
+                    <button 
+                        className="absolute right-6 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm rounded-full p-4 text-white hover:bg-white/30 transition-all"
+                        onClick={() => paginate(1)}
+                    >
+                        <MdKeyboardArrowRight size={36} />
+                    </button>
+                    
+                    {/* 사용자 정보 */}
+                    <div className="absolute top-6 left-6 flex items-center space-x-3">
+                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-lg">
+                            <img
+                                src={posts[currentIndex].profileImage || 'https://via.placeholder.com/150'}
+                                alt={posts[currentIndex].nickname}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-white text-lg drop-shadow-lg">{posts[currentIndex].nickname}</h3>
+                            <p className="text-xs text-white/90 drop-shadow-md">{formatTimeAgo(posts[currentIndex].createdAt)}</p>
+                        </div>
+                    </div>
+                    
+                    {/* 우측 하단 액션 버튼 */}
+                    <div className="absolute right-6 bottom-24 flex flex-col items-center space-y-4">
+                        <button
+                            onClick={() => {
+                                console.log('전체화면 하트 클릭:', { 
+                                    postId: posts[currentIndex].id, 
+                                    isLiked: posts[currentIndex].isLiked,
+                                    likeCount: posts[currentIndex].likeCount 
+                                });
+                                handleLikeToggle(posts[currentIndex].id, posts[currentIndex].isLiked);
+                            }}
+                            className="flex flex-col items-center hover:scale-110 transition-transform"
+                        >
+                            <FaHeart 
+                                size={36} 
+                                className={`drop-shadow-lg ${posts[currentIndex].isLiked ? 'text-red-500' : 'text-white'}`}
+                            />
+                            <span className="text-white text-lg font-bold mt-2 drop-shadow-lg">{formatNumber(posts[currentIndex].likeCount)}</span>
+                        </button>
+                        
+                        <div className="flex flex-col items-center">
+                            <FaComment size={36} className="text-white drop-shadow-lg" />
+                            <span className="text-white text-lg font-bold mt-2 drop-shadow-lg">{posts[currentIndex].commentCount}</span>
+                        </div>
+                        
+                        <button className="text-white hover:scale-110 transition-transform">
+                            <FaShare size={36} className="drop-shadow-lg" />
+                        </button>
+                    </div>
+                    
+                    {/* 하단 캡션 */}
+                    <div className="absolute bottom-6 left-6 right-32">
+                        <p className="text-white text-base mb-2 drop-shadow-lg">
+                            <span className="font-bold">{posts[currentIndex].nickname}</span> {posts[currentIndex].content}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                            {posts[currentIndex].hashtags.map((tag: string, index: number) => (
+                                <span key={index} className="text-white/90 text-sm font-medium drop-shadow-md">#{tag}</span>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+                
+                {/* ESC 키로 닫기 */}
+                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 text-white/70 text-sm">
+                    ESC 키 또는 더블클릭으로 닫기
+                </div>
+            </div>
+        )}
+
+        {/* 게시물 작성 모달 */}
+        <CreatePostModal
+            isOpen={isCreateModalOpen}
+            onClose={() => setIsCreateModalOpen(false)}
+            onPostCreated={fetchPosts}
+        />
+        </>
     );
 }
 
