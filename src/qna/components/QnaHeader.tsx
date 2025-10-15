@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaPlus, FaPaw } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
 import QuestionCreateModal from "./QuestionCreateModal";
 
 interface Props {
@@ -11,15 +11,11 @@ const QnaHeader: React.FC<Props> = ({ onCreated }) => {
 
     return (
         <>
-            <div className="flex justify-between items-center pt-15 pb-6 px-12 bg-white sticky top-0 z-20 border-b">
-                <div className="flex items-center gap-2">
-                    <FaPaw size={24} className="text-purple-600" />
-                    <h1 className="text-2xl font-bold text-purple-600">MyRealPet 커뮤니티</h1>
-                </div>
-
+            <div className="flex justify-between items-center pt-3 pb-3 px-5 rounded-lg bg-white sticky top-0 z-20">
+                    <h1 className="text-2xl font-bold ml-2 text-gray-900">커뮤니티</h1>
                 <button
                     onClick={() => setOpenCreateModal(true)}
-                    className="flex items-center gap-2 bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+                    className="flex items-center gap-2 bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600"
                 >
                     <FaPlus size={16} />
                     질문하기

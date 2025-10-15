@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { api } from "../utils/QnaApi";
+import  QnaApi from "../utils/QnaApi"; // ← api → QnaApi로 변경
 import { FaTimes } from "react-icons/fa";
 
 interface Props {
     onClose: () => void;
-    onCreated: () => void; // 질문 작성 후 리스트 새로고침
+    onCreated: () => void;
 }
 
 const categories = ["전체","일상", "궁금해요", "기타"];
@@ -22,7 +22,7 @@ const QuestionCreateModal: React.FC<Props> = ({ onClose, onCreated }) => {
         }
         setLoading(true);
         try {
-            await api.post("/questions", { title, content, category });
+            await QnaApi.createQuestion({ title, content, category }); // ← 여기 변경됨
             setLoading(false);
             onCreated();
             onClose();

@@ -13,7 +13,7 @@ const PostCard: React.FC<Props> = ({ question }) => {
     return (
         <>
             <div
-                className="bg-white p-4 rounded shadow cursor-pointer hover:shadow-md transition"
+                className="bg-white p-4 rounded-xl shadow cursor-pointer hover:shadow-md transition"
                 onClick={() => setOpenModal(true)}
             >
                 <div className="flex justify-between items-center mb-2">

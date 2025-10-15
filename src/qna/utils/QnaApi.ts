@@ -1,42 +1,28 @@
-import axios from "axios";
+import { get, post, put, del } from "./axiosConfig";
+import type { Question, Answer } from "../types/qna";
 
-export const api = axios.create({
-    baseURL: "http://localhost:8004/api/qna",
-    headers: { "Content-Type": "application/json" },
-    withCredentials: true, // 인증 필요 시
-});
+const QnaApi = {
+    // Questions
+    getQuestions: (params?: { category?: string; sort?: string; page?: number; size?: number }) =>
+        get<{ content: Question[]; totalElements: number }>("/questions", params),
 
-// Question API
-export const getQuestions = (params: any) =>
-    api.get("/questions", { params }).then(res => res.data);
+    getQuestion: (id: number) => get<Question>(`/questions/${id}`),
+    createQuestion: (data: { title: string; content: string; category?: string }) =>
+        post<number>("/questions", data),
+    updateQuestion: (id: number, data: { title?: string; content?: string; category?: string }) =>
+        put<void>(`/questions/${id}`, data),
+    deleteQuestion: (id: number) => del(`/questions/${id}`),
 
-export const getQuestion = (id: number) =>
-    api.get(`/questions/${id}`).then(res => res.data);
+    // Answers
+    getAnswers: (questionId: number, page = 0, size = 10) =>
+        get<{ content: Answer[]; totalElements: number }>("/answers", { questionId, page, size }),
+    createAnswer: (data: { questionId: number; content: string; isPrivate?: boolean }) =>
+        post<number>("/answers", data),
+    updateAnswer: (id: number, data: { content?: string; isPrivate?: boolean }) =>
+        put<void>(`/answers/${id}`, data),
+    deleteAnswer: (id: number) => del(`/answers/${id}`),
+    voteAnswer: (id: number, type: "UP" | "DOWN") => post<void>(`/answers/${id}/votes`, { type }),
+    reportAnswer: (id: number, reason: string) => post<void>(`/answers/${id}/reports`, { reason }),
+};
 
-export const createQuestion = (data: { title: string; content: string; category?: string }) =>
-    api.post("/questions", data).then(res => res.data);
-
-export const updateQuestion = (id: number, data: any) =>
-    api.put(`/questions/${id}`, data);
-
-export const deleteQuestion = (id: number) =>
-    api.delete(`/questions/${id}`);
-
-// Answer API
-export const getAnswers = (questionId: number, page = 0, size = 10) =>
-    api.get("/answers", { params: { questionId, page, size } }).then(res => res.data);
-
-export const createAnswer = (data: { questionId: number; content: string; isPrivate?: boolean }) =>
-    api.post("/answers", data).then(res => res.data);
-
-export const updateAnswer = (id: number, data: any) =>
-    api.put(`/answers/${id}`, data);
-
-export const deleteAnswer = (id: number) =>
-    api.delete(`/answers/${id}`);
-
-export const voteAnswer = (id: number, type: "UP" | "DOWN") =>
-    api.post(`/answers/${id}/votes`, { type });
-
-export const reportAnswer = (id: number, reason: string) =>
-    api.post(`/answers/${id}/reports`, { reason });
+export default QnaApi;
