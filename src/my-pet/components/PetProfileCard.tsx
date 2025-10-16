@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import type {Pet} from '../types/types.ts';
+import React from 'react';
+import type { Pet } from '../types/types.ts';
 import { useNavigate } from 'react-router-dom';
 import { getDefaultImageUrl } from '../utils/petUtils.ts';
 
@@ -8,24 +8,10 @@ interface PetProfileCardProps {
     onEdit: (pet: Pet) => void;
     onOpenConfirm: (id: number) => void;
     onOpenRegistration: (registrationUrl: string) => void;
-    onShowAlert: (message: string) => void;
-    onToggleMission: (petId: number, task: string) => void;
-    onRerollMissions: (petId: number) => void;
 }
 
-const PetProfileCard: React.FC<PetProfileCardProps> = ({ pet, onEdit, onOpenConfirm, onOpenRegistration, onToggleMission, onRerollMissions }) => {
+const PetProfileCard: React.FC<PetProfileCardProps> = ({ pet, onEdit, onOpenConfirm, onOpenRegistration }) => {
     const navigate = useNavigate();
-
-    // 미션 목록을 보여줄지 말지 결정하는 상태
-    const [showMissions, setShowMissions] = useState(false);
-
-    // 데일리 미션 진행도를 계산하는 로직
-    const missionProgress = useMemo(() => {
-        const totalMissions = pet.dailyMission.length;
-        if (totalMissions === 0) return 0; // 미션이 없으면 0%
-        const completedMissions = pet.dailyMission.filter(m => m.done).length;
-        return Math.round((completedMissions / totalMissions) * 100);
-    }, [pet.dailyMission]);
 
     // 프로필 이미지 로딩에 실패했을 때, 기본 이미지로 바꿔주는 함수
     const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -40,7 +26,7 @@ const PetProfileCard: React.FC<PetProfileCardProps> = ({ pet, onEdit, onOpenConf
                         <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-indigo-200 bg-gray-100 flex items-center justify-center">
                             <img
                                 className="h-full w-full object-cover"
-                                src={pet.imageUrl || '/default-pet-image.png'}
+                                src={pet.imageUrl}
                                 alt={`${pet.name}의 프로필 사진`}
                                 onError={handleImageError}
                             />
@@ -93,54 +79,14 @@ const PetProfileCard: React.FC<PetProfileCardProps> = ({ pet, onEdit, onOpenConf
                             <i className="fas fa-birthday-cake"></i>
                             <span>{pet.dob}</span>
                         </div>
-
-                        {/* 데일리 미션 진행도 바 */}
-                        <div className="mt-4">
-                            <label className="text-sm font-medium text-gray-600">오늘의 미션 달성도</label>
-                            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
-                                <div className="bg-gradient-to-r from-green-400 to-blue-500 h-2.5 rounded-full" style={{ width: `${missionProgress}%` }}></div>
-                            </div>
-                            <p className="text-right text-sm text-gray-500 mt-1">{missionProgress}% 완료</p>
-                        </div>
                     </div>
                 </div>
 
-                {/* 데일리 미션 목록 */}
-                {showMissions && (
-                    <div className="mt-4 pt-4 border-t border-gray-200 animate-fade-in">
-                        <div className="flex justify-between items-center mb-2">
-                            <h4 className="font-semibold text-gray-700">오늘의 미션 목록</h4>
-                            <button
-                                onClick={() => onRerollMissions(pet.id)}
-                                disabled={pet.hasRerolledToday} // 새로고침 했으면 버튼 비활성화
-                                className="py-1 px-3 text-xs font-semibold rounded-full transition text-white bg-indigo-400 hover:bg-indigo-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                            >
-                                <i className="fas fa-sync-alt mr-1"></i>
-                                {pet.hasRerolledToday ? '사용완료' : '새로고침'}
-                            </button>
-                        </div>
-                        <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
-                            {pet.dailyMission.map((mission) => (
-                                <div
-                                    key={mission.task}
-                                    className="flex items-center p-2 rounded-lg transition hover:bg-gray-50 cursor-pointer"
-                                    onClick={() => onToggleMission(pet.id, mission.task)}
-                                >
-                                    <input type="checkbox" checked={mission.done} readOnly className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"/>
-                                    <label className={`ml-3 text-gray-700 select-none ${mission.done ? 'line-through text-gray-400' : ''}`}>
-                                        {mission.task}
-                                    </label>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
                 {/* 하단 기능 아이콘 메뉴 */}
                 <div className="mt-6 pt-6 border-t border-gray-200 flex justify-around">
-                    <div className="flex flex-col items-center cursor-pointer text-center w-20" onClick={() => navigate(`/memories/${pet.id}`)}>
+                    <div className="flex flex-col items-center cursor-pointer text-center w-20" onClick={() => navigate(`/health-report/${pet.id}`)}>
                         <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center text-blue-500 text-2xl mb-2"><i className="fa-solid fa-book-medical"></i></div>
-                        <span className="text-sm text-gray-600">추억 기록</span>
+                        <span className="text-sm text-gray-600">건강 기록</span>
                     </div>
                     <div className="flex flex-col items-center cursor-pointer text-center w-20" onClick={() => navigate(`/medical-record/${pet.id}`)}>
                         <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center text-green-500 text-2xl mb-2"><i className="fa-solid fa-stethoscope"></i></div>
@@ -151,7 +97,7 @@ const PetProfileCard: React.FC<PetProfileCardProps> = ({ pet, onEdit, onOpenConf
                         <div className="w-14 h-14 bg-pink-100 rounded-full flex items-center justify-center text-pink-500 text-2xl mb-2"><i className="fa-solid fa-heart-pulse"></i></div>
                         <span className="text-sm text-gray-600">건강 리포트</span>
                     </div>
-                    <div className="flex flex-col items-center cursor-pointer text-center w-20" onClick={() => setShowMissions(!showMissions)}>
+                    <div className="flex flex-col items-center cursor-pointer text-center w-20" onClick={() => navigate(`/my-pet/${pet.id}/missions`)}>
                         <div className="w-14 h-14 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-500 text-2xl mb-2"><i className="fa-solid fa-bone"></i></div>
                         <span className="text-sm text-gray-600">데일리 미션</span>
                     </div>
