@@ -8,6 +8,7 @@ export type Species = 'DOG' | 'CAT' | 'OTHER';
 // Pet 등록 요청 타입
 export interface RegisterPetAccountRequest {
     name: string;
+    species: Species;
     mainBreedId?: number | null;
     customMainBreedName?: string | null;
     subBreedId?: number | null;
@@ -21,7 +22,18 @@ export interface RegisterPetAccountRequest {
 }
 
 // Pet 수정 요청 타입
-export interface UpdatePetAccountRequest extends RegisterPetAccountRequest {
+export interface UpdatePetAccountRequest {
+    name: string;
+    mainBreedId?: number | null;
+    customMainBreedName?: string | null;
+    subBreedId?: number | null;
+    gender: string;
+    birthday: string;
+    isNeutered: boolean;
+    hasMicrochip: boolean;
+    registrationNum?: number | null;
+    profileImg?: File | null;
+    registerPdf?: File | null;
     deleteProfileImg?: boolean;
     deleteRegistrationPdf?: boolean;
 }
@@ -171,6 +183,10 @@ export const breedApi = {
 // FormData 생성 헬퍼
 const createPetFormData = (request: RegisterPetAccountRequest | UpdatePetAccountRequest, isUpdate = false): FormData => {
     const formData = new FormData();
+
+    if (!isUpdate && 'species' in request) {
+        formData.append('species', request.species);
+    }
 
     // 필수 필드
     formData.append('name', request.name);

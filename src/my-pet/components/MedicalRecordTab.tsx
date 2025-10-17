@@ -438,7 +438,16 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
                                             <div key={index} className="p-3">
                                                 <div className="grid grid-cols-2 gap-y-1">
                                                     <div className="col-span-1">
-                                                        <p className="font-medium text-gray-800">{item.name}</p>
+                                                        <p className="font-medium text-gray-800">
+                                                            {item.name}
+                                                            {(item.days || item.frequency) && (
+                                                                <span className="text-gray-500 font-normal text-sm">
+                                                                    {' '}({item.days && `${item.days}일`}
+                                                                    {item.days && item.frequency && ', '}
+                                                                    {item.frequency && item.frequency})
+                                                                </span>
+                                                            )}
+                                                        </p>
                                                     </div>
                                                     <div className="col-span-1 text-right">
                                                         {item.amount && (

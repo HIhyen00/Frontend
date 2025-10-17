@@ -34,6 +34,8 @@ export interface MedicationItemDto {
     quantity?: number;
     unitPrice?: number;
     amount?: number;
+    frequency?: string;
+    days?: number;
     notes?: string;
 }
 

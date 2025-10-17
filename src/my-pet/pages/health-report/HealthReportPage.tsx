@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type {Pet} from "../../types/types.ts";
+import { petApi, convertResponseToPet, handleApiError } from "../../utils/petApi.ts";
 
 import AIReportTab from "../../components/AIReportTab.tsx";
 import CycleTrackerTab from "../../components/CycleTrackerTab.tsx";
@@ -15,23 +16,28 @@ const HealthReportPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'ai' | 'cycle' | 'weight'>('ai');
 
     useEffect(() => {
-        if (petId) {
-            const savedPetsData = localStorage.getItem('myPetsData');
-            if (savedPetsData) {
-                const allPets: Pet[] = JSON.parse(savedPetsData);
-                const currentPet = allPets.find(p => p.id === parseInt(petId));
-
-                if (currentPet) {
-                    // 데이터 마이그레이션: Pet 데이터에 최신 필드가 없을 경우 기본값을 설정합니다.
-                    const migratedPet: Pet = {
-                        ...currentPet,
-                        aiReports: Array.isArray(currentPet.aiReports) ? currentPet.aiReports : [],
-                    };
-                    setPetData(migratedPet);
-                }
+        const loadPetData = async () => {
+            if (!petId) {
+                setIsLoading(false);
+                return;
             }
-        }
-        setIsLoading(false);
+
+            try {
+                setIsLoading(true);
+                // API로 펫 정보 조회
+                const petResponse = await petApi.getPet(parseInt(petId));
+                const convertedPet = convertResponseToPet(petResponse);
+                setPetData(convertedPet);
+            } catch (error) {
+                const errorMessage = handleApiError(error);
+                console.error('펫 정보 로딩 실패:', errorMessage);
+                setPetData(null);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadPetData();
     }, [petId]);
 
     const handleUpdatePetData = (updatedPet: Pet) => {
@@ -46,7 +52,14 @@ const HealthReportPage: React.FC = () => {
     };
 
     if (isLoading) {
-        return <div className="p-8 text-center">데이터를 불러오는 중...</div>;
+        return (
+            <div className="flex items-center justify-center min-h-screen p-8">
+                <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+                    <p className="text-gray-500 mt-4">데이터를 불러오는 중...</p>
+                </div>
+            </div>
+        );
     }
 
     if (!petData) {

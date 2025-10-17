@@ -34,7 +34,7 @@ const ScoreBar: React.FC<{ score: number; label: string; color: keyof typeof col
     </div>
 );
 
-const InBodyResult: React.FC<InBodyResultProps> = ({ result, onBack }) => {
+const InBodyResult: React.FC<InBodyResultProps> = ({ pet, result, onBack }) => {
     const scoreColor =
         result.overallScore > 70
             ? 'text-blue-500'
@@ -129,7 +129,7 @@ const InBodyResult: React.FC<InBodyResultProps> = ({ result, onBack }) => {
             </div>
 
             {/* AI Chat Section */}
-            <AiChat reportId={result.id} />
+            <AiChat reportId={result.id} petId={pet.id} />
 
             {/* Premium Upsell & Back Button */}
             <div className="mt-10 text-center">

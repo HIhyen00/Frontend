@@ -112,30 +112,44 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
 
                 // 품종 정보 설정
                 if (pet.type === 'other') {
+                    // 기타 동물인 경우
                     setCustomBreed(pet.customBreed || pet.mainBreed || '');
                     setShowCustomBreed(true);
                     setMainBreed('');
                     setMainBreedId(undefined);
-                } else if (pet.customBreed) {
-                    // 커스텀 품종인 경우
-                    setCustomBreed(pet.customBreed);
+                    setSubBreed('');
+                    setSubBreedId(undefined);
+                } else if (pet.customBreed || (pet.mainBreed && !pet.mainBreedId)) {
+                    // 커스텀 품종인 경우 (customBreed가 있거나, mainBreed는 있지만 mainBreedId가 없는 경우)
+                    setCustomBreed(pet.customBreed || pet.mainBreed || '');
                     setMainBreed('직접입력');
                     setMainBreedId(undefined);
                     setShowCustomBreed(true);
+                    setSubBreed('');
+                    setSubBreedId(undefined);
                 } else if (pet.mainBreedId) {
-                    // DB에서 가져온 품종인 경우
+                    // DB에 있는 품종인 경우
                     setMainBreed(pet.mainBreed || '');
                     setMainBreedId(pet.mainBreedId);
                     setShowCustomBreed(false);
-                }
+                    setCustomBreed('');
 
-                // 서브 품종
-                if (pet.subBreedId) {
-                    setSubBreed(pet.subBreed || '');
-                    setSubBreedId(pet.subBreedId);
+                    // 서브 품종도 설정
+                    if (pet.subBreedId) {
+                        setSubBreed(pet.subBreed || '');
+                        setSubBreedId(pet.subBreedId);
+                    } else {
+                        setSubBreed('');
+                        setSubBreedId(undefined);
+                    }
                 } else {
+                    // 품종 정보가 없는 경우
+                    setMainBreed('');
+                    setMainBreedId(undefined);
                     setSubBreed('');
                     setSubBreedId(undefined);
+                    setCustomBreed('');
+                    setShowCustomBreed(false);
                 }
             } else {
                 // 추가 모드 - 초기화
@@ -263,6 +277,21 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
     };
 
     const handleSave = () => {
+        if (!name.trim()) {
+            alert('이름을 입력해주세요.');
+            return;
+        }
+
+        if (type !== 'other' && !mainBreedId && !customBreed.trim()) {
+            alert('품종을 선택하거나 입력해주세요.');
+            return;
+        }
+
+        if (type === 'other' && !customBreed.trim()) {
+            alert('품종을 입력해주세요.');
+            return;
+        }
+
         onSave({
             id: pet?.id,
             type,

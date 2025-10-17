@@ -21,7 +21,7 @@ const PetProfileCard: React.FC<PetProfileCardProps> = ({ pet, onEdit, onOpenConf
     return (
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden transition-transform duration-300 hover:scale-[1.02] hover:shadow-xl">
             <div className="p-6">
-                <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                <div className="flex flex-col md:flex-row items-center md:items-center gap-6">
                     <div className="relative flex-shrink-0">
                         <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-indigo-200 bg-gray-100 flex items-center justify-center">
                             <img
@@ -84,15 +84,14 @@ const PetProfileCard: React.FC<PetProfileCardProps> = ({ pet, onEdit, onOpenConf
 
                 {/* 하단 기능 아이콘 메뉴 */}
                 <div className="mt-6 pt-6 border-t border-gray-200 flex justify-around">
-                    <div className="flex flex-col items-center cursor-pointer text-center w-20" onClick={() => navigate(`/health-report/${pet.id}`)}>
+                    <div className="flex flex-col items-center cursor-pointer text-center w-20" onClick={() => navigate(`/memories/${pet.id}`)}>
                         <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center text-blue-500 text-2xl mb-2"><i className="fa-solid fa-book-medical"></i></div>
-                        <span className="text-sm text-gray-600">건강 기록</span>
+                        <span className="text-sm text-gray-600">기록</span>
                     </div>
                     <div className="flex flex-col items-center cursor-pointer text-center w-20" onClick={() => navigate(`/medical-record/${pet.id}`)}>
                         <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center text-green-500 text-2xl mb-2"><i className="fa-solid fa-stethoscope"></i></div>
                         <span className="text-sm text-gray-600">진료/접종</span>
                     </div>
-                    {/* 건강리포트 */}
                     <div className="flex flex-col items-center cursor-pointer text-center w-20" onClick={() => navigate(`/health-report/${pet.id}`)}>
                         <div className="w-14 h-14 bg-pink-100 rounded-full flex items-center justify-center text-pink-500 text-2xl mb-2"><i className="fa-solid fa-heart-pulse"></i></div>
                         <span className="text-sm text-gray-600">건강 리포트</span>

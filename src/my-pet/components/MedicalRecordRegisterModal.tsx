@@ -330,16 +330,30 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                     medicationItems;
 
         if (editingItemIndex !== null) {
-            const newItems = [...items];
-            newItems[editingItemIndex] = itemData;
-
-            if (currentItemType === 'test') setTestItems(newItems as TestItemDto[]);
-            else if (currentItemType === 'treatment') setTreatmentItems(newItems as TreatmentItemDto[]);
-            else setMedicationItems(newItems as MedicationItemDto[]);
+            // 수정 모드
+            if (currentItemType === 'test') {
+                const newItems = [...testItems];
+                newItems[editingItemIndex] = itemData as TestItemDto;
+                setTestItems(newItems);
+            } else if (currentItemType === 'treatment') {
+                const newItems = [...treatmentItems];
+                newItems[editingItemIndex] = itemData as TreatmentItemDto;
+                setTreatmentItems(newItems);
+            } else {
+                const newItems = [...medicationItems];
+                newItems[editingItemIndex] = itemData as MedicationItemDto;
+                setMedicationItems(newItems);
+            }
         } else {
-            if (currentItemType === 'test') setTestItems([...testItems, itemData as TestItemDto]);
-            else if (currentItemType === 'treatment') setTreatmentItems([...treatmentItems, itemData as TreatmentItemDto]);
-            else setMedicationItems([...medicationItems, itemData as MedicationItemDto]);
+            // 추가 모드
+            if (currentItemType === 'test') {
+                setTestItems([...testItems, itemData as TestItemDto]);
+            } else if (currentItemType === 'treatment') {
+                setTreatmentItems([...treatmentItems, itemData as TreatmentItemDto]);
+            } else {
+                setMedicationItems([...medicationItems, itemData as MedicationItemDto]);
+                console.log('✅ 저장 후 medicationItems:', [...medicationItems, itemData]);
+            }
         }
 
         setIsItemModalOpen(false);
@@ -366,7 +380,9 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
         }
     };
 
-    const renderItemList = (items: (TestItemDto | TreatmentItemDto | MedicationItemDto)[], type: ItemType, title: string) => (
+    const renderItemList = (items: (TestItemDto | TreatmentItemDto | MedicationItemDto)[], type: ItemType, title: string) => {
+        const isMedication = type === 'medication';
+        return (
         <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
                 <label className="block text-sm font-medium text-gray-700">{title}</label>
@@ -382,42 +398,55 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                 <div className="text-sm text-gray-400 text-center py-2">항목이 없습니다</div>
             ) : (
                 <div className="space-y-2">
-                    {items.map((item, index) => (
-                        <div key={index} className="flex justify-between items-start border rounded p-2 text-sm">
-                            <div className="flex-1">
-                                <p className="font-medium">{item.name}</p>
-                                {item.notes && <p className="text-gray-500 text-xs mt-1">{item.notes}</p>}
-                                {item.quantity && item.unitPrice && (
-                                    <p className="text-gray-500 text-xs mt-1">
-                                        {item.quantity} × {item.unitPrice.toLocaleString()}원
+                    {items.map((item, index) => {
+                        const medicationItem = isMedication ? item as MedicationItemDto : null;
+                        return (
+                            <div key={index} className="flex justify-between items-start border rounded p-2 text-sm">
+                                <div className="flex-1">
+                                    <p className="font-medium">
+                                        {item.name}
+                                        {medicationItem && (medicationItem.days || medicationItem.frequency) && (
+                                            <span className="text-gray-500 font-normal">
+                                                    {' '}({medicationItem.days && `${medicationItem.days}일`}
+                                                {medicationItem.days && medicationItem.frequency && ', '}
+                                                {medicationItem.frequency && medicationItem.frequency})
+                                                </span>
+                                        )}
                                     </p>
-                                )}
+                                    {item.notes && <p className="text-gray-500 text-xs mt-1">{item.notes}</p>}
+                                    {item.quantity && item.unitPrice && (
+                                        <p className="text-gray-500 text-xs mt-1">
+                                            {item.quantity} × {item.unitPrice.toLocaleString()}원
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2 ml-2">
+                                    {item.amount && (
+                                        <span className="font-medium">{item.amount.toLocaleString()}원</span>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => openItemModal(type, index)}
+                                        className="text-gray-500 hover:text-gray-700"
+                                    >
+                                        <i className="fas fa-edit"></i>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleOpenConfirm(type, index)}
+                                        className="text-red-500 hover:text-red-700"
+                                    >
+                                        <i className="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2 ml-2">
-                                {item.amount && (
-                                    <span className="font-medium">{item.amount.toLocaleString()}원</span>
-                                )}
-                                <button
-                                    type="button"
-                                    onClick={() => openItemModal(type, index)}
-                                    className="text-gray-500 hover:text-gray-700"
-                                >
-                                    <i className="fas fa-edit"></i>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleOpenConfirm(type, index)}
-                                    className="text-red-500 hover:text-red-700"
-                                >
-                                    <i className="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>
-    );
+        );
+    };
 
     // 자동 분석 버튼 활성화 조건
     const canAutoAnalyze = receiptFileId && testItems.length === 0 && treatmentItems.length === 0 && medicationItems.length === 0;
