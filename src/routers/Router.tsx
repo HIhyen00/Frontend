@@ -16,6 +16,7 @@ const MyPage = lazy(() => import("../account/pages/MyPage.tsx"));
 const MedicalRecord = lazy(() => import("../my-pet/pages/medical-record/MedicalRecordPage.tsx"));
 const MemoriesPage = lazy(() => import("../my-pet/pages/memories/MemoriesPage.tsx"));
 const MissionPage = lazy(() => import("../my-pet/pages/my-pet/MissionPage.tsx"));
+const QnaPage = lazy(()=> import("../qna/pages/QnaPage.tsx"));
 
 function LogoutModal() {
     const { showLogoutModal, setShowLogoutModal, logout } = useAuth();
@@ -82,6 +83,7 @@ function AppRouter() {
                         <Route path="/medical-record/:petId" element={<MedicalRecord/>}/>
                         <Route path="/memories/:petId" element={<MemoriesPage/>}/>
                         <Route path="/my-pet/:petId/missions" element={<MissionPage/>}/>
+                        <Route path="/qna" element={<QnaPage/>}/>
                     </Route>
                 </Routes>
                 <LogoutModal />

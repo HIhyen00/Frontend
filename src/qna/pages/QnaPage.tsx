@@ -1,108 +1,125 @@
-import React, { useEffect, useState } from "react";
-import  QnaApi  from "../utils/QnaApi";
+import React, { useState, useEffect } from "react";
 import type { Question } from "../types/qna";
+import { getQuestions, deleteQuestion } from "../utils/QnaApi";
+
 import QnaHeader from "../components/QnaHeader";
 import CategoryTabs from "../components/CategoryTabs";
-import PostCard from "../components/PostCard";
+import QuestionCard from "../components/QuestionCard";
+import QuestionForm from "../components/QuestionForm";
 import QuestionDetailModal from "../components/QuestionDetailModal";
+import Pagination from "../components/Pagination";
 
 const QnaPage: React.FC = () => {
     const [questions, setQuestions] = useState<Question[]>([]);
-    const [category, setCategory] = useState<string | undefined>();
-    const [page, setPage] = useState(0);
-    const [totalPages, setTotalPages] = useState(0);
-    const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
-    const pageSize = 5;
-    const [sort, setSort] = useState("recommended");
+    const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
+    const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+    const [showCreate, setShowCreate] = useState(false);
+    const [category, setCategory] = useState<string | undefined>(undefined);
+    const [sort, setSort] = useState<string>("latest");
+    const [page, setPage] = useState<number>(0);
+    const [totalPages, setTotalPages] = useState<number>(1);
+    const cardsPerPage = 5;
 
+    // API에서 질문 가져오기
     const fetchQuestions = async () => {
         try {
-            const data = await QnaApi.getQuestions({ category, sort, page, size: pageSize });
-            setQuestions(data.content);
-            setTotalPages(Math.ceil(data.totalElements / pageSize));
-        } catch (e) {
-            console.error(e);
+            const res = await getQuestions(category, sort, page, cardsPerPage);
+            setQuestions(res.data.content);
+            setTotalPages(res.data.totalPages || 1);
+        } catch (err: any) {
+            alert(err.koreanMessage || "질문 로드 실패");
         }
     };
 
     useEffect(() => {
+        setPage(0); // 카테고리/정렬 변경 시 페이지 초기화
+    }, [category, sort]);
+
+    useEffect(() => {
         fetchQuestions();
-    }, [category, page, sort]);
+    }, [category, sort, page]);
 
-    const handleCategoryChange = (newCategory: string | undefined) => {
-        setCategory(newCategory);
-        setPage(0);
-    };
-
-    const handlePageChange = (newPage: number) => {
-        setPage(newPage);
-        window.scrollTo({ top: 0, behavior: "smooth" });
-    };
-
-    const renderPageNumbers = () => {
-        const pages = [];
-        const maxVisiblePages = 5;
-        let startPage = Math.max(0, page - Math.floor(maxVisiblePages / 2));
-        let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 1);
-
-        if (endPage - startPage < maxVisiblePages - 1) {
-            startPage = Math.max(0, endPage - maxVisiblePages + 1);
+    const handleDelete = async (q: Question) => {
+        if (!confirm("질문을 삭제하시겠습니까?")) return;
+        try {
+            await deleteQuestion(q.id);
+            fetchQuestions();
+        } catch (err: any) {
+            alert(err.koreanMessage || "삭제 실패");
         }
-
-        for (let i = startPage; i <= endPage; i++) {
-            pages.push(
-                <button
-                    key={i}
-                    onClick={() => handlePageChange(i)}
-                    className={`px-4 py-2 rounded-lg transition-all ${
-                        page === i ? "bg-purple-500 text-white font-bold" : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                >
-                    {i + 1}
-                </button>
-            );
-        }
-        return pages;
     };
 
     return (
-        <div className="w-full pt-14">
-            <div className="max-w-7xl mx-auto px-6 py-8">
-                <QnaHeader onCreated={fetchQuestions} />
-                <CategoryTabs activeCategory={category} setActiveCategory={handleCategoryChange} sortValue={sort}
-                              onSortChange={(value) => setSort(value)}/>
+        <div className="container mx-auto px-35 py-20">
+            {/* 헤더 */}
+            <QnaHeader />
 
-                <div className="mt-6 space-y-4">
-                    {questions.map((q) => (
-                        <PostCard key={q.id} question={q} onClick={() => setSelectedQuestionId(q.id)} />
-                    ))}
-                </div>
+            {/* 카테고리 + 정렬 */}
+            <CategoryTabs
+                activeCategory={category}
+                setActiveCategory={setCategory}
+                sortValue={sort}
+                onSortChange={setSort}
+            />
 
-                {totalPages > 1 && (
-                    <div className="flex justify-center items-center gap-2 mt-8">
-                        <button
-                            onClick={() => handlePageChange(page - 1)}
-                            disabled={page === 0}
-                            className="px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                        >
-                            이전
-                        </button>
-                        {renderPageNumbers()}
-                        <button
-                            onClick={() => handlePageChange(page + 1)}
-                            disabled={page === totalPages - 1}
-                            className="px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                        >
-                            다음
-                        </button>
-                    </div>
-                )}
+            {/* 질문 작성/수정 폼 */}
+            {showCreate && (
+                <QuestionForm
+                    onClose={() => setShowCreate(false)}
+                    onSubmit={fetchQuestions}
+                />
+            )}
+            {editingQuestion && (
+                <QuestionForm
+                    question={editingQuestion}
+                    onClose={() => setEditingQuestion(null)}
+                    onSubmit={fetchQuestions}
+                />
+            )}
+
+
+            {/* 질문 카드 목록 */}
+            <div className="space-y-4 pt-10">
+                {questions.map((q) => (
+                    <QuestionCard
+                        key={q.id}
+                        question={q}
+                        onClick={() => setSelectedQuestion(q)}
+                        onEdit={(q) => setEditingQuestion(q)}
+                        onDelete={handleDelete}
+                    />
+                ))}
             </div>
 
-            {selectedQuestionId && (
+            {/* 페이지네이션 */}
+            {totalPages > 1 && (
+                <div className="flex justify-center items-center mt-6 gap-2">
+                    <button
+                        onClick={() => setPage((p) => Math.max(p - 1, 0))}
+                        disabled={page === 0}
+                        className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        이전
+                    </button>
+                    <span className="px-2 text-sm">
+            {page + 1} / {totalPages}
+          </span>
+                    <button
+                        onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))}
+                        disabled={page === totalPages - 1}
+                        className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        다음
+                    </button>
+                </div>
+            )}
+
+            {/* 질문 상세 모달 */}
+            {selectedQuestion && (
                 <QuestionDetailModal
-                    questionId={selectedQuestionId}
-                    onClose={() => setSelectedQuestionId(null)}
+                    question={selectedQuestion}
+                    onClose={() => setSelectedQuestion(null)}
+                    currentUserId={1} // 실제 로그인 유저 ID
                 />
             )}
         </div>
