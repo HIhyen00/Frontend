@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from "react";
-import type { Question, Answer, VoteRequest, ReportRequest } from "../types/qna";
+import type { Question, Answer } from "../types/qna";
 import { getAnswers, createAnswer, updateAnswer, deleteAnswer, voteAnswer, reportAnswer } from "../utils/QnaApi";
 
 interface Props {
     question: Question;
-    onClose: () => void;
     currentUserId?: number;
+    onClose: () => void;
 }
 
-const QuestionDetailModal: React.FC<Props> = ({ question, onClose, currentUserId }) => {
+const QuestionDetailModal: React.FC<Props> = ({ question, currentUserId, onClose }) => {
     const [answers, setAnswers] = useState<Answer[]>([]);
     const [newContent, setNewContent] = useState("");
-    const [editingAnswerId, setEditingAnswerId] = useState<number | null>(null);
+    const [editingId, setEditingId] = useState<number | null>(null);
     const [editingContent, setEditingContent] = useState("");
 
     const fetchAnswers = async () => {
@@ -19,7 +19,7 @@ const QuestionDetailModal: React.FC<Props> = ({ question, onClose, currentUserId
             const res = await getAnswers(question.id, 0, 10);
             setAnswers(res.data.content);
         } catch (err: any) {
-            alert(err.koreanMessage || "답변 로드 실패");
+            console.error("답변 로드 실패", err);
         }
     };
 
@@ -27,7 +27,6 @@ const QuestionDetailModal: React.FC<Props> = ({ question, onClose, currentUserId
         fetchAnswers();
     }, [question.id]);
 
-    // 답변 작성
     const handleCreate = async () => {
         if (!newContent.trim()) return;
         try {
@@ -35,89 +34,140 @@ const QuestionDetailModal: React.FC<Props> = ({ question, onClose, currentUserId
             setNewContent("");
             fetchAnswers();
         } catch (err: any) {
-            alert(err.koreanMessage || "답변 작성 실패");
+            console.error("답변 작성 실패", err);
         }
     };
 
-    // 답변 수정
-    const handleUpdate = async (answerId: number) => {
+    const handleUpdate = async (id: number) => {
         if (!editingContent.trim()) return;
         try {
-            await updateAnswer(answerId, { content: editingContent, isPrivate: false });
-            setEditingAnswerId(null);
+            await updateAnswer(id, { content: editingContent, isPrivate: false });
+            setEditingId(null);
             fetchAnswers();
         } catch (err: any) {
-            alert(err.koreanMessage || "답변 수정 실패");
+            console.error("답변 수정 실패", err);
         }
     };
 
-    // 답변 삭제
-    const handleDelete = async (answerId: number) => {
+    const handleDelete = async (id: number) => {
         if (!confirm("답변을 삭제하시겠습니까?")) return;
         try {
-            await deleteAnswer(answerId);
+            await deleteAnswer(id);
             fetchAnswers();
         } catch (err: any) {
-            alert(err.koreanMessage || "삭제 실패");
+            console.error("답변 삭제 실패", err);
         }
     };
 
-    // 추천/반대
-    const handleVote = async (answerId: number, type: "UP" | "DOWN") => {
+    const handleVote = async (id: number, type: "UP" | "DOWN") => {
         try {
-            await voteAnswer(answerId, { type });
+            await voteAnswer(id, { type });
             fetchAnswers();
         } catch (err: any) {
-            alert(err.koreanMessage || "투표 실패");
+            console.error("투표 실패", err);
         }
     };
 
-    // 신고
-    const handleReport = async (answerId: number) => {
+    const handleReport = async (id: number) => {
         const reason = prompt("신고 사유를 입력하세요.");
         if (!reason) return;
         try {
-            await reportAnswer(answerId, { reason });
+            await reportAnswer(id, { reason });
             fetchAnswers();
         } catch (err: any) {
-            alert(err.koreanMessage || "신고 실패");
+            console.error("신고 실패", err);
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-20 z-50">
-            <div className="bg-white p-4 rounded w-11/12 md:w-2/3 max-h-[80vh] overflow-y-auto">
-                <button className="float-right" onClick={onClose}>닫기</button>
-                <h2 className="text-xl font-bold">{question.title}</h2>
-                <p className="my-2">{question.content}</p>
+        <div
+            className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-start z-50"
+            onClick={onClose}
+        >
+            <div
+                className="relative bg-white rounded-lg w-11/12 md:w-2/3 max-h-[80vh] overflow-y-auto p-6 shadow-lg"
+                onClick={(e) => e.stopPropagation()} // 모달 내부 클릭 시 닫기 방지
+            >
+                {/* 닫기 버튼 */}
+                <button
+                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+                    onClick={onClose}
+                >
+                    ✕
+                </button>
 
-                <h3 className="mt-4 font-semibold">답변</h3>
-                <div className="space-y-2">
-                    {answers.length === 0 && <p>답변이 없습니다.</p>}
-                    {answers.map(a => (
-                        <div key={a.id} className="p-2 border rounded">
-                            {editingAnswerId === a.id ? (
+                {/* 질문 */}
+                <h2 className="text-2xl font-bold mb-2">{question.title}</h2>
+                <p className="text-gray-700 mb-4">{question.content}</p>
+
+                {/* 답변 섹션 */}
+                <h3 className="mt-6 mb-2 text-lg font-semibold border-b pb-1">답변 ({answers.length})</h3>
+                <div className="space-y-3">
+                    {answers.length === 0 && <p className="text-gray-500">답변이 없습니다.</p>}
+                    {answers.map((a) => (
+                        <div key={a.id} className="p-3 border rounded bg-gray-50">
+                            {editingId === a.id ? (
                                 <div>
-                                    <textarea
-                                        value={editingContent}
-                                        onChange={(e) => setEditingContent(e.target.value)}
-                                        className="w-full border p-1"
-                                    />
-                                    <button className="mr-2" onClick={() => handleUpdate(a.id)}>저장</button>
-                                    <button onClick={() => setEditingAnswerId(null)}>취소</button>
+                  <textarea
+                      value={editingContent}
+                      onChange={(e) => setEditingContent(e.target.value)}
+                      className="w-full border p-2 rounded mb-2"
+                  />
+                                    <div className="flex gap-2">
+                                        <button
+                                            className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                                            onClick={() => handleUpdate(a.id)}
+                                        >
+                                            저장
+                                        </button>
+                                        <button
+                                            className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
+                                            onClick={() => setEditingId(null)}
+                                        >
+                                            취소
+                                        </button>
+                                    </div>
                                 </div>
                             ) : (
                                 <div>
-                                    <p>{a.content}</p>
-                                    <small>작성자 ID: {a.userId}</small>
-                                    <div className="mt-1 flex gap-2">
-                                        <button onClick={() => handleVote(a.id, "UP")}>👍 {a.upvoteCount}</button>
-                                        <button onClick={() => handleVote(a.id, "DOWN")}>👎 {a.downvoteCount}</button>
-                                        <button onClick={() => handleReport(a.id)}>⚠️ 신고</button>
+                                    <p className="mb-1">{a.content}</p>
+                                    <small className="text-gray-400">작성자 ID: {a.userId}</small>
+                                    <div className="mt-2 flex flex-wrap gap-2 text-sm">
+                                        <button
+                                            className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                                            onClick={() => handleVote(a.id, "UP")}
+                                        >
+                                            👍 {a.upvoteCount}
+                                        </button>
+                                        <button
+                                            className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                                            onClick={() => handleVote(a.id, "DOWN")}
+                                        >
+                                            👎 {a.downvoteCount}
+                                        </button>
+                                        <button
+                                            className="px-2 py-1 bg-red-200 rounded hover:bg-red-300"
+                                            onClick={() => handleReport(a.id)}
+                                        >
+                                            ⚠️ 신고
+                                        </button>
                                         {currentUserId === a.userId && (
                                             <>
-                                                <button onClick={() => { setEditingAnswerId(a.id); setEditingContent(a.content); }}>수정</button>
-                                                <button onClick={() => handleDelete(a.id)}>삭제</button>
+                                                <button
+                                                    className="px-2 py-1 bg-blue-200 rounded hover:bg-blue-300"
+                                                    onClick={() => {
+                                                        setEditingId(a.id);
+                                                        setEditingContent(a.content);
+                                                    }}
+                                                >
+                                                    수정
+                                                </button>
+                                                <button
+                                                    className="px-2 py-1 bg-gray-300 rounded hover:bg-gray-400"
+                                                    onClick={() => handleDelete(a.id)}
+                                                >
+                                                    삭제
+                                                </button>
                                             </>
                                         )}
                                     </div>
@@ -128,16 +178,16 @@ const QuestionDetailModal: React.FC<Props> = ({ question, onClose, currentUserId
                 </div>
 
                 {/* 새 답변 작성 */}
-                <div className="mt-4">
-                    <textarea
-                        value={newContent}
-                        onChange={(e) => setNewContent(e.target.value)}
-                        placeholder="답변을 작성하세요..."
-                        className="w-full border p-2"
-                    />
+                <div className="mt-6">
+          <textarea
+              value={newContent}
+              onChange={(e) => setNewContent(e.target.value)}
+              placeholder="답변을 작성하세요..."
+              className="w-full border p-3 rounded mb-2"
+          />
                     <button
                         onClick={handleCreate}
-                        className="px-4 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
+                        className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
                     >
                         답변 작성
                     </button>
