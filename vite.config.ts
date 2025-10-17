@@ -45,13 +45,13 @@ export default defineConfig({
             //     secure: false
             // },
             // Default fallback for any other /api routes
-            '/api': {
-                target: 'http://localhost:8002',
+            '/api/qna':{
+                target: 'http://localhost:8004',
                 changeOrigin: true,
                 secure: false,
             },
-            '/api/qna':{
-                target: 'http://localhost:8004',
+            '/api': {
+                target: 'http://localhost:8002',
                 changeOrigin: true,
                 secure: false,
             }
