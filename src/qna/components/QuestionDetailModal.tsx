@@ -1,224 +1,146 @@
 import React, { useEffect, useState } from "react";
-import QnaApi  from "../utils/QnaApi";
-import type { Answer, Question } from "../types/qna";
-import { FaTimes, FaThumbsUp, FaThumbsDown, FaFlag, FaEdit, FaTrash, FaPaperPlane } from "react-icons/fa";
+import type { Question, Answer, VoteRequest, ReportRequest } from "../types/qna";
+import { getAnswers, createAnswer, updateAnswer, deleteAnswer, voteAnswer, reportAnswer } from "../utils/QnaApi";
 
 interface Props {
-    questionId: number;
+    question: Question;
     onClose: () => void;
+    currentUserId?: number;
 }
 
-const QuestionDetailModal: React.FC<Props> = ({ questionId, onClose }) => {
-    const [question, setQuestion] = useState<Question | null>(null);
+const QuestionDetailModal: React.FC<Props> = ({ question, onClose, currentUserId }) => {
     const [answers, setAnswers] = useState<Answer[]>([]);
+    const [newContent, setNewContent] = useState("");
     const [editingAnswerId, setEditingAnswerId] = useState<number | null>(null);
     const [editingContent, setEditingContent] = useState("");
-    const [newAnswer, setNewAnswer] = useState("");
 
-    useEffect(() => {
-        document.body.style.overflow = "hidden";
-        return () => { document.body.style.overflow = "auto"; };
-    }, []);
-
-    useEffect(() => {
-        fetchQuestionDetail();
-    }, [questionId]);
-
-    const fetchQuestionDetail = async () => {
+    const fetchAnswers = async () => {
         try {
-            const q = await QnaApi.getQuestion(questionId);
-            setQuestion(q);
-
-            const a = await QnaApi.getAnswers(questionId);
-            setAnswers(a.content);
-        } catch (e) {
-            console.error(e);
+            const res = await getAnswers(question.id, 0, 10);
+            setAnswers(res.data.content);
+        } catch (err: any) {
+            alert(err.koreanMessage || "답변 로드 실패");
         }
     };
 
-    // 질문 좋아요
-    const handleQuestionVote = async () => {
-        if (!question) return;
+    useEffect(() => {
+        fetchAnswers();
+    }, [question.id]);
+
+    // 답변 작성
+    const handleCreate = async () => {
+        if (!newContent.trim()) return;
         try {
-            await QnaApi.voteAnswer(question.id, "UP"); // QnaApi에서 질문 투표 엔드포인트 필요
-            fetchQuestionDetail();
-        } catch (e) {
-            console.error(e);
+            await createAnswer({ questionId: question.id, content: newContent, isPrivate: false });
+            setNewContent("");
+            fetchAnswers();
+        } catch (err: any) {
+            alert(err.koreanMessage || "답변 작성 실패");
         }
     };
 
+    // 답변 수정
+    const handleUpdate = async (answerId: number) => {
+        if (!editingContent.trim()) return;
+        try {
+            await updateAnswer(answerId, { content: editingContent, isPrivate: false });
+            setEditingAnswerId(null);
+            fetchAnswers();
+        } catch (err: any) {
+            alert(err.koreanMessage || "답변 수정 실패");
+        }
+    };
+
+    // 답변 삭제
+    const handleDelete = async (answerId: number) => {
+        if (!confirm("답변을 삭제하시겠습니까?")) return;
+        try {
+            await deleteAnswer(answerId);
+            fetchAnswers();
+        } catch (err: any) {
+            alert(err.koreanMessage || "삭제 실패");
+        }
+    };
+
+    // 추천/반대
     const handleVote = async (answerId: number, type: "UP" | "DOWN") => {
         try {
-            await QnaApi.voteAnswer(answerId, type);
-            fetchQuestionDetail();
-        } catch (e) {
-            console.error(e);
+            await voteAnswer(answerId, { type });
+            fetchAnswers();
+        } catch (err: any) {
+            alert(err.koreanMessage || "투표 실패");
         }
     };
 
+    // 신고
     const handleReport = async (answerId: number) => {
-        const reason = prompt("신고 사유를 입력해주세요");
+        const reason = prompt("신고 사유를 입력하세요.");
         if (!reason) return;
         try {
-            await QnaApi.reportAnswer(answerId, reason);
-            alert("신고 완료");
-        } catch (e) {
-            console.error(e);
+            await reportAnswer(answerId, { reason });
+            fetchAnswers();
+        } catch (err: any) {
+            alert(err.koreanMessage || "신고 실패");
         }
     };
-
-    const handleDelete = async (answerId: number) => {
-        if (!confirm("정말 삭제하시겠습니까?")) return;
-        try {
-            await QnaApi.deleteAnswer(answerId);
-            fetchQuestionDetail();
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
-    const handleEdit = (answer: Answer) => {
-        setEditingAnswerId(answer.id);
-        setEditingContent(answer.content || "");
-    };
-
-    const handleEditSubmit = async (answerId: number) => {
-        try {
-            await QnaApi.updateAnswer(answerId, { content: editingContent });
-            setEditingAnswerId(null);
-            setEditingContent("");
-            fetchQuestionDetail();
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
-    const handleCreateAnswer = async () => {
-        if (!newAnswer.trim()) return;
-        try {
-            await QnaApi.createAnswer({ questionId, content: newAnswer, isPrivate: false });
-            setNewAnswer("");
-            fetchQuestionDetail();
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
-    if (!question) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-center items-start bg-black bg-opacity-50 p-4 pt-20">
-            <div className="bg-white w-full max-w-4xl rounded shadow-lg p-6 relative max-h-[80vh] overflow-auto">
-                {/* 닫기 버튼 */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
-                >
-                    <FaTimes size={24} />
-                </button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-20 z-50">
+            <div className="bg-white p-4 rounded w-11/12 md:w-2/3 max-h-[80vh] overflow-y-auto">
+                <button className="float-right" onClick={onClose}>닫기</button>
+                <h2 className="text-xl font-bold">{question.title}</h2>
+                <p className="my-2">{question.content}</p>
 
-                {/* 질문 영역 */}
-                <h2 className="text-3xl font-bold mb-2">{question.title}</h2>
-                <div className="flex items-center justify-between mb-4">
-                    <p className="text-gray-700 text-lg whitespace-pre-wrap">{question.content}</p>
-                    <button
-                        onClick={handleQuestionVote}
-                        className="flex items-center gap-1 text-green-500 border border-green-500 px-3 py-1 rounded hover:bg-green-50"
-                    >
-                        <FaThumbsUp /> {question.likeCount || 0}
-                    </button>
-                </div>
-
-                <hr className="my-4" />
-
-                {/* 답변 리스트 */}
-                <h3 className="text-2xl font-semibold mb-4">답변</h3>
-                <div className="space-y-4 mb-6">
-                    {answers.map((a) => (
-                        <div
-                            key={a.id}
-                            className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition"
-                        >
+                <h3 className="mt-4 font-semibold">답변</h3>
+                <div className="space-y-2">
+                    {answers.length === 0 && <p>답변이 없습니다.</p>}
+                    {answers.map(a => (
+                        <div key={a.id} className="p-2 border rounded">
                             {editingAnswerId === a.id ? (
-                                <>
+                                <div>
                                     <textarea
-                                        className="w-full border rounded p-3 text-lg mb-2"
                                         value={editingContent}
                                         onChange={(e) => setEditingContent(e.target.value)}
+                                        className="w-full border p-1"
                                     />
-                                    <div className="flex gap-2">
-                                        <button
-                                            className="px-4 py-2 bg-purple-500 text-white rounded"
-                                            onClick={() => handleEditSubmit(a.id)}
-                                        >
-                                            저장
-                                        </button>
-                                        <button
-                                            className="px-4 py-2 bg-gray-300 rounded"
-                                            onClick={() => setEditingAnswerId(null)}
-                                        >
-                                            취소
-                                        </button>
-                                    </div>
-                                </>
+                                    <button className="mr-2" onClick={() => handleUpdate(a.id)}>저장</button>
+                                    <button onClick={() => setEditingAnswerId(null)}>취소</button>
+                                </div>
                             ) : (
-                                <>
-                                    <p className="text-gray-800 text-lg mb-2">{a.content}</p>
-                                    <div className="flex flex-wrap gap-3 text-sm mt-2">
-                                        <button
-                                            className="flex items-center gap-1 text-green-500"
-                                            onClick={() => handleVote(a.id, "UP")}
-                                        >
-                                            <FaThumbsUp /> {a.upvoteCount}
-                                        </button>
-                                        <button
-                                            className="flex items-center gap-1 text-red-500"
-                                            onClick={() => handleVote(a.id, "DOWN")}
-                                        >
-                                            <FaThumbsDown /> {a.downvoteCount}
-                                        </button>
-                                        <button
-                                            className="flex items-center gap-1 text-yellow-600"
-                                            onClick={() => handleReport(a.id)}
-                                        >
-                                            <FaFlag /> 신고
-                                        </button>
-                                        <button
-                                            className="flex items-center gap-1 text-blue-500"
-                                            onClick={() => handleEdit(a)}
-                                        >
-                                            <FaEdit /> 수정
-                                        </button>
-                                        <button
-                                            className="flex items-center gap-1 text-red-600"
-                                            onClick={() => handleDelete(a.id)}
-                                        >
-                                            <FaTrash /> 삭제
-                                        </button>
+                                <div>
+                                    <p>{a.content}</p>
+                                    <small>작성자 ID: {a.userId}</small>
+                                    <div className="mt-1 flex gap-2">
+                                        <button onClick={() => handleVote(a.id, "UP")}>👍 {a.upvoteCount}</button>
+                                        <button onClick={() => handleVote(a.id, "DOWN")}>👎 {a.downvoteCount}</button>
+                                        <button onClick={() => handleReport(a.id)}>⚠️ 신고</button>
+                                        {currentUserId === a.userId && (
+                                            <>
+                                                <button onClick={() => { setEditingAnswerId(a.id); setEditingContent(a.content); }}>수정</button>
+                                                <button onClick={() => handleDelete(a.id)}>삭제</button>
+                                            </>
+                                        )}
                                     </div>
-                                </>
+                                </div>
                             )}
                         </div>
                     ))}
                 </div>
 
-                {/* 답변 작성 */}
-                <div className="mt-6">
-                    <h4 className="text-xl font-semibold mb-2">답변 작성</h4>
+                {/* 새 답변 작성 */}
+                <div className="mt-4">
                     <textarea
-                        className="w-full border rounded p-4 text-lg h-36"
-                        placeholder="답변을 작성하세요"
-                        value={newAnswer}
-                        onChange={(e) => setNewAnswer(e.target.value)}
+                        value={newContent}
+                        onChange={(e) => setNewContent(e.target.value)}
+                        placeholder="답변을 작성하세요..."
+                        className="w-full border p-2"
                     />
-                    <div className="mt-3 flex justify-end">
-                        <button
-                            onClick={handleCreateAnswer}
-                            className="flex items-center gap-2 bg-purple-500 text-white px-6 py-2 rounded hover:bg-purple-600"
-                        >
-                            <FaPaperPlane /> 작성
-                        </button>
-                    </div>
+                    <button
+                        onClick={handleCreate}
+                        className="px-4 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
+                    >
+                        답변 작성
+                    </button>
                 </div>
             </div>
         </div>
