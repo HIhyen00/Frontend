@@ -8,7 +8,7 @@ const BASE_URL = import.meta.env.VITE_PETLIFECYCLE_API_BASE_URL ||'/api';
 // Axios 인스턴스 생성
 const axiosInstance: AxiosInstance = axios.create({
     baseURL: BASE_URL,
-    timeout: 30000,
+    timeout: 60000,
     headers: {
         'Content-Type': 'application/json',
     },

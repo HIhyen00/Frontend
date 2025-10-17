@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type {Pet} from "../../types/types.ts";
+import { petApi, convertResponseToPet, handleApiError } from "../../utils/petApi.ts";
 
 import MedicalRecordTab from "../../components/MedicalRecordTab.tsx";
 import VaccinationHistoryTab from "../../components/VaccinationHistoryTab.tsx";
@@ -14,23 +15,28 @@ const MedicalRecordPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'vac' | 'record'>('vac');
 
     useEffect(() => {
-        if (petId) {
-            const savedPetsData = localStorage.getItem('myPetsData');
-            if (savedPetsData) {
-                const allPets: Pet[] = JSON.parse(savedPetsData);
-                const currentPet = allPets.find(p => p.id === parseInt(petId));
-
-                if (currentPet) {
-                    // 데이터 마이그레이션: Pet 데이터에 최신 필드가 없을 경우 기본값을 설정합니다.
-                    const migratedPet: Pet = {
-                        ...currentPet,
-                        aiReports: Array.isArray(currentPet.aiReports) ? currentPet.aiReports : [],
-                    };
-                    setPetData(migratedPet);
-                }
+        const loadPetData = async () => {
+            if (!petId) {
+                setIsLoading(false);
+                return;
             }
-        }
-        setIsLoading(false);
+
+            try {
+                setIsLoading(true);
+                // API로 펫 정보 조회
+                const petResponse = await petApi.getPet(parseInt(petId));
+                const convertedPet = convertResponseToPet(petResponse);
+                setPetData(convertedPet);
+            } catch (error) {
+                const errorMessage = handleApiError(error);
+                console.error('펫 정보 로딩 실패:', errorMessage);
+                setPetData(null);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadPetData();
     }, [petId]);
 
     const handleUpdatePetData = (updatedPet: Pet) => {
@@ -45,7 +51,12 @@ const MedicalRecordPage: React.FC = () => {
     };
 
     if (isLoading) {
-        return <div className="p-8 text-center">데이터를 불러오는 중...</div>;
+        return (
+            <div className="p-8 text-center">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+                <p className="text-gray-500 mt-4">데이터를 불러오는 중...</p>
+            </div>
+        );
     }
 
     if (!petData) {
@@ -67,7 +78,16 @@ const MedicalRecordPage: React.FC = () => {
                     <button onClick={() => navigate('/my-pet')} className="text-gray-500 hover:text-gray-800">
                         <i className="fas fa-arrow-left text-2xl"></i>
                     </button>
-                    <img src={petData.imageUrl} alt={petData.name} className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md" />
+                    <img src={petData.imageUrl} alt={petData.name} className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md"
+                         onError={(e) => {
+                             const target = e.target as HTMLImageElement;
+                             target.src = petData.type === 'dog'
+                                 ? 'https://placehold.co/400x400/E0E7FF/4F46E5?text=Dog'
+                                 : petData.type === 'cat'
+                                     ? 'https://placehold.co/400x400/FFE4E6/D946EF?text=Cat'
+                                     : 'https://placehold.co/400x400/F3F4F6/6B7280?text=Pet';
+                         }}
+                    />
                     <div>
                         <h1 className="text-4xl font-bold text-gray-800">{petData.name}</h1>
                         <p className="text-lg text-gray-500">진료 / 접종 내역</p>

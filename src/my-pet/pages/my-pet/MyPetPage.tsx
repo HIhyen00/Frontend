@@ -4,7 +4,8 @@ import PetProfileCard from '../../components/PetProfileCard.tsx';
 import PetModal from '../../components/PetModal.tsx';
 import AlertNotification from '../../../shared/components/AlertNotification.tsx';
 import ConfirmModal from '../../components/ConfirmModel.tsx';
-import { getDefaultImageUrl } from '../../utils/petUtils.ts';
+import { petApi, convertResponseToPet, handleApiError } from '../../utils/petApi.ts';
+
 
 // PetModal에서 전달하는 데이터 타입을 정의합니다.
 interface PetFormData {
@@ -13,82 +14,20 @@ interface PetFormData {
     name: string;
     gender: '남아' | '여아' | '정보없음';
     mainBreed: string;
+    mainBreedId?: number;
     subBreed?: string | null;
+    subBreedId?: number;
     customBreed?: string | null;
     dob: string;
     imageDataUrl?: string | null;
+    imageFile?: File | null;
+    deleteProfileImg?: boolean;
     isNeutered?: boolean;
     hasMicrochip?: boolean;
     registrationNumber?: string;
     registrationFile?: File | null;
+    deleteRegistrationPdf?: boolean;
 }
-
-// 샘플데이터
-const initialPetsData: Pet[] = [
-    {
-        id: 1,
-        type: 'dog',
-        name: '왕만두',
-        gender: '남아',
-        mainBreed: '비숑 프리제',
-        subBreed: '',
-        customBreed: '',
-        dob: '2022-04-13',
-        hasMicrochip: true,
-        isNeutered: true,
-        imageUrl: getDefaultImageUrl('dog'),
-        registrationNum: '123456789123456',
-        registrationUrl: '',
-        surveyCount: 0,
-        lastSurveyDate: '',
-        weightRecords: [],
-        healthNotes: [],
-        heatCycles: [],
-        aiReports: [],
-    },
-    {
-        id: 2,
-        type: 'cat',
-        name: '정범이',
-        gender: '여아',
-        mainBreed: '코리안 숏헤어',
-        subBreed: '',
-        customBreed: '',
-        dob: '2020-09-28',
-        hasMicrochip: true,
-        isNeutered: false,
-        imageUrl: getDefaultImageUrl('cat'),
-        registrationNum: '123456789789789',
-        registrationUrl: '',
-        surveyCount: 0,
-        lastSurveyDate: '',
-        weightRecords: [],
-        healthNotes: [],
-        heatCycles: [],
-        aiReports: [],
-    },
-    {
-        id: 3,
-        type: 'other',
-        name: '코코',
-        gender: '남아',
-        mainBreed: '왕관앵무',
-        subBreed: '',
-        customBreed: '',
-        dob: '2023-01-15',
-        hasMicrochip: false,
-        isNeutered: false,
-        imageUrl: getDefaultImageUrl('other'),
-        registrationNum: '123123789123456',
-        registrationUrl: '',
-        surveyCount: 0,
-        lastSurveyDate: '',
-        weightRecords: [],
-        healthNotes: [],
-        heatCycles: [],
-        aiReports: [],
-    }
-];
 
 const MyPetPage: React.FC = () => {
     const [pets, setPets] = useState<Pet[]>([]);
@@ -98,37 +37,27 @@ const MyPetPage: React.FC = () => {
     const [alert, setAlert] = useState<{ message: string; show: boolean }>({ message: '', show: false });
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [petToDeleteId, setPetToDeleteId] = useState<number | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
+    // 펫 목록 로드 - API 연결
     useEffect(() => {
-        const savedPetsData = localStorage.getItem('myPetsData');
-        let petsToLoad: Pet[];
-
-        if (savedPetsData) {
-            const parsedPets: Pet[] = JSON.parse(savedPetsData);
-            petsToLoad = parsedPets.map(pet => {
-                const originalUrl = pet.imageUrl;
-                const isValidUrl = originalUrl && (originalUrl.startsWith('data:') || originalUrl.includes('githubusercontent'));
-                const newUrl = isValidUrl ? originalUrl : getDefaultImageUrl(pet.type);
-
-                return {
-                    ...pet,
-                    surveyCount: typeof pet.surveyCount === 'number' ? pet.surveyCount : 0,
-                    lastSurveyDate: pet.lastSurveyDate || '',
-                    aiReports: Array.isArray(pet.aiReports) ? pet.aiReports : [],
-                    imageUrl: newUrl,
-                };
-            });
-        } else {
-            petsToLoad = initialPetsData;
-        }
-        setPets(petsToLoad);
-        localStorage.setItem('myPetsData', JSON.stringify(petsToLoad));
+        loadPets();
     }, []);
 
-    const updatePetsData = (newPets: Pet[]) => {
-        setPets(newPets);
-        localStorage.setItem('myPetsData', JSON.stringify(newPets));
-    }
+    const loadPets = async () => {
+        try {
+            setIsLoading(true);
+            const petsData = await petApi.getAllPets();
+            const convertedPets = petsData.map(convertResponseToPet);
+            setPets(convertedPets);
+        } catch (error) {
+            const errorMessage = handleApiError(error);
+            showAlert(`펫 목록을 불러오는데 실패했습니다: ${errorMessage}`);
+            console.error('Failed to load pets:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const showAlert = (message: string) => {
         setAlert({ message, show: true });
@@ -137,83 +66,103 @@ const MyPetPage: React.FC = () => {
 
     const handleOpenRegistration = (registrationUrl: string) => {
         if (registrationUrl) {
-            if (registrationUrl.startsWith('blob:') || registrationUrl.startsWith('data:')) {
-                window.open(registrationUrl, '_blank');
-            } else {
-                const link = document.createElement('a');
-                link.href = registrationUrl;
-                link.target = '_blank';
-                link.click();
-            }
+            window.open(registrationUrl, '_blank');
         } else {
             showAlert('등록된 동물등록증이 없습니다.');
         }
     };
 
-    const handleSavePet = (petData: PetFormData) => {
-        const imageUrl = petData.imageDataUrl || ((modalMode === 'edit' && currentPet) ? currentPet.imageUrl : getDefaultImageUrl(petData.type));
-        let newPets: Pet[];
+    const handleSavePet = async (petData: PetFormData) => {
+        try {
+            setIsLoading(true);
 
-        if (modalMode === 'add') {
-            const newPet: Pet = {
-                id: Date.now(),
-                type: petData.type,
-                name: petData.name,
-                gender: petData.gender,
-                mainBreed: petData.mainBreed,
-                subBreed: petData.subBreed || '',
-                customBreed: petData.customBreed || '',
-                dob: petData.dob,
-                imageUrl,
-                hasMicrochip: petData.hasMicrochip || false,
-                isNeutered: petData.isNeutered || false,
-                registrationNum: petData.registrationNumber || '',
-                registrationUrl: petData.registrationFile ? URL.createObjectURL(petData.registrationFile) : '',
-                surveyCount: 0,
-                lastSurveyDate: '',
-                weightRecords: [],
-                healthNotes: [],
-                heatCycles: [],
-                aiReports: [],
-            };
+            const hasMainBreedId = petData.mainBreedId != null;
+            const hasCustomBreed = petData.customBreed && petData.customBreed.trim() !== '';
 
-            newPets = [...pets, newPet];
-            showAlert('새로운 펫이 등록되었습니다!');
-        } else {
-            newPets = pets.map(p => {
-                if (p.id === currentPet?.id) {
-                    return {
-                        ...p,
-                        type: petData.type,
-                        name: petData.name,
-                        gender: petData.gender,
-                        mainBreed: petData.mainBreed,
-                        subBreed: petData.subBreed || '',
-                        customBreed: petData.customBreed || '',
-                        dob: petData.dob,
-                        imageUrl: petData.imageDataUrl || p.imageUrl,
-                        hasMicrochip: petData.hasMicrochip || false,
-                        isNeutered: petData.isNeutered || false,
-                        registrationNum: petData.registrationNumber || '',
-                        registrationUrl: petData.registrationFile ? URL.createObjectURL(petData.registrationFile) : p.registrationUrl,
-                    };
+            if (modalMode === 'add') {
+
+                const speciesMap: { [key: string]: 'DOG' | 'CAT' | 'OTHER' } = {
+                    'dog': 'DOG',
+                    'cat': 'CAT',
+                    'other': 'OTHER'
+                };
+                const species = speciesMap[petData.type];
+
+                const registerRequest = {
+                    species: species, // 등록 시에만 species 전송
+                    name: petData.name,
+                    mainBreedId: hasMainBreedId ? petData.mainBreedId : null,
+                    customMainBreedName: (!hasMainBreedId && hasCustomBreed) ? petData.customBreed : null,
+                    subBreedId: hasMainBreedId ? (petData.subBreedId || null) : null,
+                    gender: petData.gender === '남아' ? 'MALE' : petData.gender === '여아' ? 'FEMALE' : 'UNKNOWN',
+                    birthday: petData.dob,
+                    isNeutered: petData.isNeutered || false,
+                    hasMicrochip: petData.hasMicrochip || false,
+                    registrationNum: petData.registrationNumber ? Number(petData.registrationNumber) : null,
+                    profileImg: petData.imageFile || null,
+                    registerPdf: petData.registrationFile || null,
+                };
+                // 새 펫 등록
+                await petApi.registerPet(registerRequest);
+                showAlert('새로운 펫이 등록되었습니다!');
+            } else {
+                // 펫 정보 수정
+                if (!currentPet?.id) {
+                    showAlert('수정할 펫 정보를 찾을 수 없습니다.');
+                    return;
                 }
-                return p;
-            });
-            showAlert(`${petData.name}의 정보가 수정되었습니다.`);
+
+                const updateRequest = {
+                    name: petData.name,
+                    mainBreedId: hasMainBreedId ? petData.mainBreedId : null,
+                    customMainBreedName: (!hasMainBreedId && hasCustomBreed) ? petData.customBreed : null,
+                    subBreedId: hasMainBreedId ? (petData.subBreedId || null) : null,
+                    gender: petData.gender === '남아' ? 'MALE' : petData.gender === '여아' ? 'FEMALE' : 'UNKNOWN',
+                    birthday: petData.dob,
+                    isNeutered: petData.isNeutered || false,
+                    hasMicrochip: petData.hasMicrochip || false,
+                    registrationNum: petData.registrationNumber ? Number(petData.registrationNumber) : null,
+                    profileImg: petData.imageFile || null,
+                    registerPdf: petData.registrationFile || null,
+                    deleteProfileImg: petData.deleteProfileImg,
+                    deleteRegistrationPdf: petData.deleteRegistrationPdf,
+                };
+
+                await petApi.updatePet(currentPet.id, updateRequest);
+                showAlert(`${petData.name}의 정보가 수정되었습니다.`);
+            }
+
+            // 목록 새로고침
+            await loadPets();
+            setIsModalOpen(false);
+        } catch (error) {
+            const errorMessage = handleApiError(error);
+            showAlert(`펫 저장에 실패했습니다: ${errorMessage}`);
+            console.error('Failed to save pet:', error);
+        } finally {
+            setIsLoading(false);
         }
-        updatePetsData(newPets);
-        setIsModalOpen(false);
     };
 
-    const handleConfirmDelete = () => {
+    const handleConfirmDelete = async () => {
         if (petToDeleteId !== null) {
-            const newPets = pets.filter(p => p.id !== petToDeleteId);
-            updatePetsData(newPets);
-            showAlert(`펫 정보가 삭제되었습니다.`);
+            try {
+                setIsLoading(true);
+                await petApi.deletePet(petToDeleteId);
+                showAlert('펫 정보가 삭제되었습니다.');
+
+                // 목록 새로고침
+                await loadPets();
+            } catch (error) {
+                const errorMessage = handleApiError(error);
+                showAlert(`펫 삭제에 실패했습니다: ${errorMessage}`);
+                console.error('Failed to delete pet:', error);
+            } finally {
+                setIsLoading(false);
+                setIsConfirmOpen(false);
+                setPetToDeleteId(null);
+            }
         }
-        setIsConfirmOpen(false);
-        setPetToDeleteId(null);
     };
 
     const handleAddPet = () => {
@@ -240,13 +189,19 @@ const MyPetPage: React.FC = () => {
                 <h1 className="text-4xl font-bold text-gray-800">나의 펫</h1>
                 <button
                     onClick={handleAddPet}
-                    className="bg-indigo-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-600 transition-colors duration-300 shadow-md hover:shadow-lg"
+                    disabled={isLoading}
+                    className="bg-indigo-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-600 transition-colors duration-300 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <i className="fas fa-plus mr-2"></i>새 펫 등록
                 </button>
             </header>
             <main>
-                {pets.length > 0 ? (
+                {isLoading ? (
+                    <div className="text-center py-20 bg-white rounded-lg shadow-md">
+                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+                        <p className="text-gray-500 mt-4">로딩 중...</p>
+                    </div>
+                ) : pets.length > 0 ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {pets.map(pet => (
                             <PetProfileCard

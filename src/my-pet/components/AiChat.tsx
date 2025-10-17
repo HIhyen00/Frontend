@@ -3,6 +3,7 @@ import { apiClient } from '../../pet-walk/utils/axiosConfig';
 
 interface AiChatProps {
     reportId: string;
+    petId: number;
 }
 
 interface Message {

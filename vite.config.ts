@@ -39,11 +39,11 @@ export default defineConfig({
                 changeOrigin: true,
                 secure: false
             },
-            '/api/missions': {
-                target: 'http://localhost:8003',
-                changeOrigin: true,
-                secure: false
-            },
+            // '/api/missions': {
+            //     target: 'http://localhost:8003',
+            //     changeOrigin: true,
+            //     secure: false
+            // },
             // Default fallback for any other /api routes
             '/api': {
                 target: 'http://localhost:8002',

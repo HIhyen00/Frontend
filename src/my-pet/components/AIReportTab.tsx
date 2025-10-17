@@ -1,5 +1,7 @@
 import { useState } from "react";
 import type { Pet, AIReport, SurveyAnswers, InBodyReport, PremiumQuestion } from "../types/types.ts";
+import { apiClient } from '../../pet-walk/utils/axiosConfig';
+import axiosInstance from "../utils/axiosConfig.ts";
 import HealthSurvey from "./HealthSurvey.tsx";
 import InBodyResult from "./InBodyResult.tsx";
 
@@ -33,7 +35,7 @@ const AIReportTab: React.FC<AIReportTabProps> = ({ pet, onUpdatePet }) => {
         setView('survey');
     };
 
-    const handleSurveyComplete = (answers: SurveyAnswers, questions: PremiumQuestion[]) => {
+    const handleSurveyComplete = async (answers: SurveyAnswers, questions: PremiumQuestion[]) => {
         const categoryScores: { [key: string]: number[] } = {};
         const warnings: string[] = [];
         const recommendations: string[] = [];
@@ -91,45 +93,83 @@ const AIReportTab: React.FC<AIReportTabProps> = ({ pet, onUpdatePet }) => {
             }
         }
 
-        const newReport: InBodyReport = {
-            id: `inbody-${Date.now()}`,
-            type: 'inbody',
-            date: new Date().toISOString().slice(0, 10),
-            overallScore,
-            summary,
-            warnings,
-            recommendations,
-            answers,
-            scores: finalScores,
-        };
+        try {
+            const surveyResult = {
+                answers,
+                questions: questions.map(q => ({
+                    category: q.category,
+                    subKey: q.subKey,
+                    text: q.text,
+                    answer: answers[q.category]?.[q.subKey]
+                })),
+                scores: finalScores,
+                overallScore
+            };
 
-        // Update survey count and date
-        const today = new Date();
-        const lastDate = pet.lastSurveyDate ? new Date(pet.lastSurveyDate) : null;
-        let newSurveyCount = pet.surveyCount || 0;
+            // const response = await apiClient.post<{
+            //     id: number;
+            //     reportContent: string;
+            //     createdAt: string;
+            // }>(`/pets/${pet.id}/health-reports`, {
+            //     surveyResult
+            // });
 
-        if (lastDate) {
-            const diffTime = Math.abs(today.getTime() - lastDate.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            if (diffDays > 30) {
-                newSurveyCount = 1; // Reset and count 1
+            const response = await axiosInstance.post<{
+                id: number;
+                reportContent: string;
+                createdAt: string;
+            }>(`/pets/${pet.id}/health-reports`,
+                { surveyResult },
+                { timeout: 60000 }  // 60초 타임아웃
+            );
+            console.log('🔍 Full API Response:', response);
+            console.log('🔍 Response Data:', response.data);
+
+            const newReport: InBodyReport = {
+                id: `inbody-${response.data.id}`,
+                type: 'inbody',
+                date: new Date(response.data.createdAt).toISOString().slice(0, 10),
+                overallScore,
+                summary,
+                warnings,
+                recommendations,
+                answers,
+                scores: finalScores,
+            };
+
+            // Update survey count and date
+            const today = new Date();
+            const lastDate = pet.lastSurveyDate ? new Date(pet.lastSurveyDate) : null;
+            let newSurveyCount = pet.surveyCount || 0;
+
+            if (lastDate) {
+                const diffTime = Math.abs(today.getTime() - lastDate.getTime());
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                if (diffDays > 30) {
+                    newSurveyCount = 1; // Reset and count 1
+                } else {
+                    newSurveyCount++;
+                }
             } else {
-                newSurveyCount++;
+                newSurveyCount = 1;
             }
-        } else {
-            newSurveyCount = 1;
+
+            const updatedPet: Pet = {
+                ...pet,
+                aiReports: [newReport, ...(pet.aiReports || [])],
+                surveyCount: newSurveyCount,
+                lastSurveyDate: today.toISOString(),
+            };
+            onUpdatePet(updatedPet);
+
+            setActiveResult(newReport);
+            setView('result');
         }
-
-        const updatedPet: Pet = {
-            ...pet,
-            aiReports: [newReport, ...(pet.aiReports || [])],
-            surveyCount: newSurveyCount,
-            lastSurveyDate: today.toISOString(),
-        };
-        onUpdatePet(updatedPet);
-
-        setActiveResult(newReport);
-        setView('result');
+        catch (error) {
+            console.error('건강 리포트 생성 실패:', error);
+            alert('리포트 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+            return;
+        }
     };
 
     const handleViewResult = (report: AIReport) => {

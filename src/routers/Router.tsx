@@ -14,6 +14,7 @@ const MyPetPage = lazy(() => import("../my-pet/pages/my-pet/MyPetPage.tsx"));
 const Login = lazy(() => import("../account/pages/Login.tsx"));
 const MyPage = lazy(() => import("../account/pages/MyPage.tsx"));
 const MedicalRecord = lazy(() => import("../my-pet/pages/medical-record/MedicalRecordPage.tsx"));
+const MemoriesPage = lazy(() => import("../my-pet/pages/memories/MemoriesPage.tsx"));
 const MissionPage = lazy(() => import("../my-pet/pages/my-pet/MissionPage.tsx"));
 
 function LogoutModal() {
@@ -79,6 +80,7 @@ function AppRouter() {
                         <Route path="/my-page" element={<MyPage/>}/>
                         <Route path="/health-report/:petId" element={<HealthReportPage />}/>
                         <Route path="/medical-record/:petId" element={<MedicalRecord/>}/>
+                        <Route path="/memories/:petId" element={<MemoriesPage/>}/>
                         <Route path="/my-pet/:petId/missions" element={<MissionPage/>}/>
                     </Route>
                 </Routes>

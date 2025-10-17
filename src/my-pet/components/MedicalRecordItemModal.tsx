@@ -5,6 +5,8 @@ interface ItemData {
     quantity?: number;
     unitPrice?: number;
     amount?: number;
+    frequency?: string;
+    days?: number;
     notes?: string;
 }
 
@@ -25,6 +27,8 @@ const MedicalRecordItemModal: React.FC<MedicalRecordItemModalProps> = ({
     const [quantity, setQuantity] = useState<number | ''>('');
     const [unitPrice, setUnitPrice] = useState<number | ''>('');
     const [amount, setAmount] = useState<number | ''>('');
+    const [frequency, setFrequency] = useState('');
+    const [days, setDays] = useState<number | ''>('');
     const [notes, setNotes] = useState('');
 
     useEffect(() => {
@@ -33,6 +37,8 @@ const MedicalRecordItemModal: React.FC<MedicalRecordItemModalProps> = ({
             setQuantity(initialData.quantity || '');
             setUnitPrice(initialData.unitPrice || '');
             setAmount(initialData.amount || '');
+            setFrequency(initialData.frequency || '');
+            setDays(initialData.days || '');
             setNotes(initialData.notes || '');
         }
     }, [initialData]);
@@ -59,6 +65,11 @@ const MedicalRecordItemModal: React.FC<MedicalRecordItemModalProps> = ({
             amount: amount ? (typeof amount === 'number' ? amount : parseInt(amount)) : undefined,
             notes: notes.trim() || undefined,
         };
+
+        if (type === 'medication') {
+            itemData.frequency = frequency.trim() || undefined;
+            itemData.days = days ? (typeof days === 'number' ? days : parseInt(days)) : undefined;
+        }
 
         onSave(itemData);
     };
@@ -106,6 +117,40 @@ const MedicalRecordItemModal: React.FC<MedicalRecordItemModalProps> = ({
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                     </div>
+
+                    {/* medication 타입일 때만 복용 빈도와 처방일수 표시 */}
+                    {type === 'medication' && (
+                        <>
+                            {/* 복용 빈도 */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    복용 빈도
+                                </label>
+                                <input
+                                    type="text"
+                                    value={frequency}
+                                    onChange={(e) => setFrequency(e.target.value)}
+                                    placeholder="예: 1일 2회"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                            </div>
+
+                            {/* 처방일수 */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    처방일수
+                                </label>
+                                <input
+                                    type="number"
+                                    value={days}
+                                    onChange={(e) => setDays(e.target.value ? parseInt(e.target.value) : '')}
+                                    placeholder="처방일수를 입력하세요"
+                                    min="1"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                            </div>
+                        </>
+                    )}
 
                     {/* 수량 */}
                     <div className="mb-4">
