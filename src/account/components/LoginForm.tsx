@@ -18,7 +18,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   const [success, setSuccess] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => {
-    return localStorage.getItem('rememberMe') === 'true';
+    const saved = localStorage.getItem('rememberMe');
+    return saved !== 'false'; // 기본값 true (명시적으로 false가 아닌 경우)
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

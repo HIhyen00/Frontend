@@ -105,7 +105,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const login = async (data: LoginRequest, rememberMe: boolean = false) => {
+  const login = async (data: LoginRequest, rememberMe: boolean = true) => {
     try {
       dispatch({ type: 'LOGIN_START' });
       const response = await authService.login(data);
