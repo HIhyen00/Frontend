@@ -192,25 +192,25 @@ function PetSns() {
     if (loading) {
         return (
             <div className="pt-24 h-screen flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
         );
     }
 
     if (posts.length === 0) {
         return (
-            <div className="pt-28 pb-28 min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+            <div className="pt-28 pb-28 min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center">
                 <div className="text-center max-w-md mx-auto px-4">
                     <div className="bg-white rounded-3xl shadow-xl p-12">
                         <p className="text-6xl mb-6">📭</p>
-                        <h2 className="text-3xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
+                        <h2 className="text-3xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-600">
                             게시물이 없습니다
                         </h2>
                         <p className="text-gray-600 text-lg mb-8">첫 번째 게시물을 작성해보세요!</p>
                         {isAuthenticated && (
                             <button
                                 onClick={() => setIsCreateModalOpen(true)}
-                                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full font-bold hover:shadow-lg hover:shadow-purple-500/50 transition-all hover:scale-105"
+                                className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-4 rounded-full font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all hover:scale-105"
                             >
                                 게시물 작성하기
                             </button>
@@ -228,7 +228,7 @@ function PetSns() {
 
     return (
         <>
-        <div className="pt-20 pb-20 min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+        <div className="pt-20 pb-20 min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
             {/* 우측 하단 버튼 그룹 */}
             <div className="fixed bottom-8 right-8 z-40 flex flex-col space-y-3">
                 {/* 나의 게시물 버튼 */}
@@ -245,7 +245,7 @@ function PetSns() {
                 {/* 게시물 작성 버튼 */}
                 <button
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full p-4 shadow-lg hover:shadow-purple-500/50 transition-all hover:scale-110 backdrop-blur-sm"
+                    className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full p-4 shadow-lg hover:shadow-blue-500/50 transition-all hover:scale-110 backdrop-blur-sm"
                     title={isAuthenticated ? "게시물 작성" : "로그인이 필요합니다"}
                 >
                     <FaPlus size={24} />
@@ -304,7 +304,7 @@ function PetSns() {
                                             }}
                                         />
                                     ) : (
-                                        <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+                                        <div className="w-full h-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center">
                                             <div className="text-center text-white">
                                                 <p className="text-6xl mb-4">🐾</p>
                                                 <p className="text-xl font-bold">{posts[currentIndex].title}</p>
@@ -418,7 +418,7 @@ function PetSns() {
             <section className="py-16 bg-white">
                 <div className="container mx-auto px-4 max-w-6xl">
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
+                        <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-600">
                             모든 게시물
                         </h2>
                         <p className="text-gray-600">다양한 반려동물들의 이야기를 만나보세요</p>
@@ -450,7 +450,7 @@ function PetSns() {
                                         onLoad={() => console.log('이미지 로드 성공:', post.image)}
                                     />
                                 ) : (
-                                    <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+                                    <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center">
                                         <div className="text-center text-white">
                                             <p className="text-4xl mb-2">🐾</p>
                                             <p className="text-xs font-bold px-2">{post.title}</p>
@@ -492,7 +492,7 @@ function PetSns() {
         
         {/* 전체 화면 모달 */}
         {isFullscreen && (
-            <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+            <div className="fixed inset-0 z-50 bg-black flex items-center justify-center" onClick={() => setIsFullscreen(false)}>
                 {/* 닫기 버튼 */}
                 <button
                     className="absolute top-6 right-6 text-white text-4xl hover:text-gray-300 transition-colors z-50"
@@ -500,9 +500,9 @@ function PetSns() {
                 >
                     ×
                 </button>
-                
+
                 {/* 이미지 */}
-                <div className="relative w-full h-full flex items-center justify-center">
+                <div className="relative w-full h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                     <img
                         src={posts[currentIndex].image}
                         alt="Post"

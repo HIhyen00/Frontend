@@ -68,7 +68,7 @@ function MyPosts() {
     if (loading) {
         return (
             <div className="pt-24 min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
         );
     }
@@ -84,7 +84,7 @@ function MyPosts() {
                     </p>
                     <button
                         onClick={() => window.location.href = '/login'}
-                        className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
                         로그인하기
                     </button>
@@ -94,12 +94,12 @@ function MyPosts() {
     }
 
     return (
-        <div className="pt-20 pb-16 min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+        <div className="pt-20 pb-16 min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
             <div className="container mx-auto px-4 max-w-6xl">
                 {/* 프로필 헤더 */}
                 <div className="bg-white rounded-3xl shadow-xl p-8 mb-8">
                     <div className="flex items-center space-x-6 mb-6">
-                        <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-purple-500 shadow-lg">
+                        <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-blue-500 shadow-lg">
                             <img
                                 src={posts[0]?.profileImage || 'https://via.placeholder.com/150'}
                                 alt="프로필"
@@ -107,7 +107,7 @@ function MyPosts() {
                             />
                         </div>
                         <div className="flex-1">
-                            <h1 className="text-3xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
+                            <h1 className="text-3xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-600">
                                 {posts[0]?.nickname || '나의 게시물'}
                             </h1>
                             <div className="flex items-center space-x-6 text-gray-600">
@@ -125,7 +125,7 @@ function MyPosts() {
                         </div>
                         <button
                             onClick={() => window.location.href = '/sns'}
-                            className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full font-bold hover:shadow-lg hover:shadow-purple-500/50 transition-all hover:scale-105"
+                            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all hover:scale-105"
                         >
                             새 게시물
                         </button>
@@ -136,13 +136,13 @@ function MyPosts() {
                 {posts.length === 0 ? (
                     <div className="bg-white rounded-3xl shadow-xl p-16 text-center">
                         <p className="text-6xl mb-6">📸</p>
-                        <h2 className="text-2xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
+                        <h2 className="text-2xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-600">
                             첫 게시물을 작성해보세요
                         </h2>
                         <p className="text-gray-600 mb-8">소중한 순간을 공유하고 추억을 남겨보세요</p>
                         <button
                             onClick={() => window.location.href = '/sns'}
-                            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full font-bold hover:shadow-lg hover:shadow-purple-500/50 transition-all hover:scale-105"
+                            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all hover:scale-105"
                         >
                             게시물 작성하기
                         </button>
@@ -166,7 +166,7 @@ function MyPosts() {
                                         }}
                                     />
                                 ) : (
-                                    <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+                                    <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center">
                                         <div className="text-center text-white">
                                             <p className="text-4xl mb-2">🐾</p>
                                             <p className="text-xs font-bold px-2">{post.title}</p>

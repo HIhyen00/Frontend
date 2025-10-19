@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks';
-import {FaEye, FaEyeSlash, FaUser, FaLock, FaPhone, FaEnvelope, FaCheck, FaTimes} from "react-icons/fa";
+import {FaEye, FaEyeSlash, FaUser, FaLock, FaPhone, FaEnvelope, FaCheck, FaTimes, FaPaw} from "react-icons/fa";
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -144,26 +144,25 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto bg-white rounded-lg shadow-md px-12 py-8">
-      <div className="text-center mb-6">
-        <img
-          src="/Logo.png"
-          alt="My Real Pet Logo"
-          className="mx-auto h-32 w-auto mb-3 cursor-pointer"
-          onClick={() => navigate('/')}
-          onError={(e) => {
-            e.currentTarget.style.display = 'none';
-          }}
-        />
-        <p className="text-2xl text-gray-600 mb-12">
-          <span className="text-blue-600 font-semibold">반려동물</span>과 함께할<br />계정을 만들어보세요
+    <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl border border-gray-100 px-12 py-8">
+      <div className="text-center mb-8">
+        <div className="flex items-center justify-center gap-2 mb-6 cursor-pointer" onClick={() => navigate('/')}>
+          <FaPaw className="text-3xl text-blue-600" />
+          <h1 className="text-2xl font-bold text-gray-800">MyRealPet</h1>
+        </div>
+        <h2 className="text-3xl font-bold text-gray-800 mb-2">
+          회원가입
+        </h2>
+        <p className="text-gray-600">
+          반려동물과 함께할 계정을 만들어보세요
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">아이디</label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
               <FaUser />
             </div>
             <input
@@ -172,8 +171,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
               name="id"
               value={formData.id}
               onChange={handleInputChange}
-              className={`w-full pl-10 pr-10 py-2 border-0 border-b bg-transparent focus:outline-none ${
-                fieldErrors.id ? 'border-red-500' : formData.id && !fieldErrors.id ? 'border-green-500' : 'border-gray-300'
+              className={`w-full pl-11 pr-11 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                fieldErrors.id ? 'border-red-300 bg-red-50' : formData.id && !fieldErrors.id ? 'border-green-300 bg-green-50' : 'border-gray-200'
               }`}
               placeholder="아이디를 입력하세요 (4자 이상)"
               disabled={isLoading}
@@ -193,8 +192,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
         </div>
 
         <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">이메일 (선택)</label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
               <FaEnvelope />
             </div>
             <input
@@ -203,10 +203,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              className={`w-full pl-10 pr-10 py-2 border-0 border-b bg-transparent focus:outline-none ${
-                fieldErrors.email ? 'border-red-500' : formData.email && !fieldErrors.email ? 'border-green-500' : 'border-gray-300'
+              className={`w-full pl-11 pr-11 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                fieldErrors.email ? 'border-red-300 bg-red-50' : formData.email && !fieldErrors.email ? 'border-green-300 bg-green-50' : 'border-gray-200'
               }`}
-              placeholder="이메일을 입력하세요 (선택)"
+              placeholder="이메일을 입력하세요"
               disabled={isLoading}
             />
             {formData.email && !fieldErrors.email && (
@@ -224,8 +224,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
         </div>
 
         <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">비밀번호</label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
               <FaLock />
             </div>
             <input
@@ -234,8 +235,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
               name="password"
               value={formData.password}
               onChange={handleInputChange}
-              className={`w-full pl-10 pr-10 py-2 border-0 border-b bg-transparent focus:outline-none ${
-                fieldErrors.password ? 'border-red-500' : 'border-gray-300'
+              className={`w-full pl-11 pr-11 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                fieldErrors.password ? 'border-red-300 bg-red-50' : 'border-gray-200'
               }`}
               placeholder="비밀번호를 입력하세요"
               disabled={isLoading}
@@ -276,8 +277,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
         </div>
 
         <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">비밀번호 확인</label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
               <FaLock />
             </div>
             <input
@@ -286,7 +288,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleInputChange}
-              className="w-full pl-10 pr-10 py-2 border-0 border-b border-gray-300 bg-transparent focus:outline-none"
+              className="w-full pl-11 pr-11 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               placeholder="비밀번호를 다시 입력하세요"
               disabled={isLoading}
             />
@@ -302,8 +304,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
         </div>
 
         <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">이름</label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
               <FaUser />
             </div>
             <input
@@ -312,7 +315,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              className="w-full pl-10 pr-3 py-2 border-0 border-b border-gray-300 bg-transparent focus:outline-none"
+              className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               placeholder="이름을 입력하세요"
               disabled={isLoading}
             />
@@ -320,8 +323,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
         </div>
 
         <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">핸드폰 번호</label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
               <FaPhone />
             </div>
             <input
@@ -330,8 +334,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
               name="phoneNumber"
               value={formData.phoneNumber}
               onChange={handleInputChange}
-              className={`w-full pl-10 pr-10 py-2 border-0 border-b bg-transparent focus:outline-none ${
-                fieldErrors.phoneNumber ? 'border-red-500' : formData.phoneNumber && !fieldErrors.phoneNumber ? 'border-green-500' : 'border-gray-300'
+              className={`w-full pl-11 pr-11 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                fieldErrors.phoneNumber ? 'border-red-300 bg-red-50' : formData.phoneNumber && !fieldErrors.phoneNumber ? 'border-green-300 bg-green-50' : 'border-gray-200'
               }`}
               placeholder="핸드폰 번호를 입력하세요"
               disabled={isLoading}
@@ -377,10 +381,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
             !formData.name ||
             !formData.phoneNumber
           }
-          className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-md transition duration-200 flex items-center justify-center gap-2"
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40"
         >
           {isLoading && (
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
           )}
           {success && <FaCheck />}
           {isLoading ? '회원가입 중...' : success ? '회원가입 완료!' : '회원가입'}
@@ -392,7 +396,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
           이미 계정이 있으신가요?{' '}
           <button
             onClick={() => navigate('/login')}
-            className="text-blue-600 hover:text-blue-700 font-medium"
+            className="text-blue-600 hover:text-blue-700 font-semibold"
           >
             로그인
           </button>

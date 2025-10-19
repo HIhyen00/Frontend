@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { apiClient } from '../../pet-walk/utils/axiosConfig';
+import { apiHelper } from '../utils/axiosConfig';
 
 interface MissionCompletion {
     completionId: number;
@@ -23,7 +23,7 @@ const MissionCalendar: React.FC<MissionCalendarProps> = ({ userId }) => {
             try {
                 const year = activeDate.getFullYear();
                 const month = activeDate.getMonth() + 1;
-                const data = await apiClient.get<MissionCompletion[]>(`/users/${userId}/missions/history`, { year, month });
+                const data = await apiHelper.get<MissionCompletion[]>(`/users/${userId}/missions/history`, { year, month });
                 setCompletions(data);
             } catch (error) {
                 console.error("Failed to fetch mission history", error);

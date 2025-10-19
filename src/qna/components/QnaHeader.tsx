@@ -15,7 +15,7 @@ const QnaHeader: React.FC<Props> = ({ onCreated }) => {
                 <h1 className="text-2xl font-bold ml-2 text-gray-900">Q&A</h1>
                 <button
                     onClick={() => setOpenCreateModal(true)}
-                    className="bg-purple-600 text-white px-4 py-2 rounded-full font-semibold hover:shadow-lg hover:shadow-purple-500/30 transition duration-300 flex items-center group"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-full font-semibold hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 transition duration-300 flex items-center group"
                 >
                     <FaPlus size={16} />
                     질문하기
@@ -25,7 +25,7 @@ const QnaHeader: React.FC<Props> = ({ onCreated }) => {
             {openCreateModal && (
                 <QuestionCreateModal
                     onClose={() => setOpenCreateModal(false)}
-                    onCreated={onCreated}
+                    onSubmit={onCreated}
                 />
             )}
         </>

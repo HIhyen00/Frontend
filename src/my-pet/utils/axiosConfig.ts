@@ -1,9 +1,9 @@
 import axios from 'axios';
-import type { AxiosInstance, InternalAxiosRequestConfig, AxiosError } from 'axios';
-import { setupResponseInterceptor } from '../../shared/utils/axiosInterceptors';
+import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { setupAxiosInterceptors } from '../../shared/utils/axiosInterceptors';
 
 // API 기본 URL 설정
-const BASE_URL = import.meta.env.VITE_PETLIFECYCLE_API_BASE_URL ||'/api';
+const BASE_URL = import.meta.env.VITE_PETLIFECYCLE_API_BASE_URL || 'http://localhost:8003/api';
 
 // Axios 인스턴스 생성
 const axiosInstance: AxiosInstance = axios.create({
@@ -15,38 +15,19 @@ const axiosInstance: AxiosInstance = axios.create({
     withCredentials: true,
 });
 
-// 요청 인터셉터
+// FormData 처리를 위한 추가 인터셉터 (공통 인터셉터 전에 실행)
 axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-        if (config.headers) {
-            if (config.data instanceof FormData) {
-                delete config.headers['Content-Type'];
-                console.log('FormData 요청 감지 - Content-Type 자동 설정');
-            }
-
-            let token = localStorage.getItem('token');
-            if (!token) {
-                token = sessionStorage.getItem('token');
-            }
-
-            if (token && token !== 'undefined' && token !== 'null') {
-                config.headers.Authorization = `Bearer ${token}`;
-                console.log('Authorization 헤더 추가:', `Bearer ${token.substring(0, 20)}...`);
-            } else {
-                console.warn('⚠️ 토큰이 없습니다. 인증이 필요한 요청은 실패할 수 있습니다.');
-            }
+        if (config.headers && config.data instanceof FormData) {
+            delete config.headers['Content-Type'];
         }
-
         return config;
     },
-    (error: AxiosError) => {
-        console.error('❌ 요청 인터셉터 에러:', error);
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
-// 응답 인터셉터 (공통 유틸리티 사용)
-setupResponseInterceptor(axiosInstance);
+// 공통 인터셉터 설정 (토큰 자동 추가 및 401 처리)
+setupAxiosInterceptors(axiosInstance);
 
 // 범용 CRUD 헬퍼 함수들
 export const apiHelper = {

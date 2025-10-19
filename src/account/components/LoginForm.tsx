@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks';
-import {FaEye, FaEyeSlash, FaUser, FaLock} from "react-icons/fa";
+import {FaEye, FaEyeSlash, FaUser, FaLock, FaPaw} from "react-icons/fa";
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -107,26 +107,25 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
-      <div className="text-center mb-6">
-        <img
-          src="/Logo.png"
-          alt="My Real Pet Logo"
-          className="mx-auto h-32 w-auto mb-3 cursor-pointer"
-          onClick={() => navigate('/')}
-          onError={(e) => {
-            e.currentTarget.style.display = 'none';
-          }}
-        />
-        <p className="text-2xl text-gray-600 mb-12">
-          로그인해서 <span className="text-blue-600 font-semibold">반려동물</span>과<br />함께하세요
+    <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+      <div className="text-center mb-8">
+        <div className="flex items-center justify-center gap-2 mb-6 cursor-pointer" onClick={() => navigate('/')}>
+          <FaPaw className="text-3xl text-blue-600" />
+          <h1 className="text-2xl font-bold text-gray-800">MyRealPet</h1>
+        </div>
+        <h2 className="text-3xl font-bold text-gray-800 mb-2">
+          로그인
+        </h2>
+        <p className="text-gray-600">
+          반려동물과 함께하는 일상을 시작하세요
         </p>
       </div>
       
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">아이디</label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
               <FaUser />
             </div>
             <input
@@ -135,7 +134,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
               name="username"
               value={formData.username}
               onChange={handleInputChange}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               placeholder="아이디를 입력하세요"
               disabled={isLoading}
             />
@@ -143,8 +142,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
         </div>
 
         <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">비밀번호</label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
               <FaLock />
             </div>
             <input
@@ -153,14 +153,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
               name="password"
               value={formData.password}
               onChange={handleInputChange}
-              className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-11 pr-11 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               placeholder="비밀번호를 입력하세요"
               disabled={isLoading}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+              className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-500 hover:text-gray-700"
               disabled={isLoading}
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -199,13 +199,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
         <button
           type="submit"
           disabled={isLoading || !!success}
-          className="w-full bg-blue-500 disabled:bg-blue-300 text-white font-medium py-3 px-4 rounded-md transition duration-200 flex items-center justify-center gap-2"
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-4 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30"
         >
           {isLoading && (
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
           )}
           {success && (
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           )}
@@ -216,10 +216,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
       <div className="mt-4">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300" />
+            <div className="w-full border-t border-gray-200" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">또는</span>
+            <span className="px-3 py-1 bg-gray-50 text-gray-500 rounded-full border border-gray-200">또는</span>
           </div>
         </div>
 
@@ -227,8 +227,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
           type="button"
           onClick={handleKakaoLogin}
           disabled={isLoading || !!success}
-          className="mt-4 w-full bg-[#FEE500] hover:bg-[#FDD835] disabled:opacity-50 disabled:cursor-not-allowed text-black font-medium py-3 px-4 rounded-md transition duration-200 flex items-center justify-center gap-3 border border-gray-300"
-          style={{ fontSize: '16px', height: '50px' }}
+          className="mt-4 w-full bg-[#FEE500] hover:bg-[#FDD835] disabled:opacity-50 disabled:cursor-not-allowed text-black font-semibold py-4 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-3"
         >
           {isLoading ? (
             <div className="animate-spin rounded-full h-5 w-5 border-2 border-black border-t-transparent"></div>
@@ -246,10 +245,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 
       </div>
 
-      <div className="mt-4 text-center">
+      <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
           계정이 없으신가요?{' '}
-          <a href="/register" className="text-blue-600 hover:text-blue-700 font-medium">
+          <a href="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
             회원가입
           </a>
         </p>

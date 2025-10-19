@@ -52,7 +52,7 @@ const QnaPage: React.FC = () => {
     return (
         <div className="container mx-auto px-35 py-20">
             {/* 헤더 */}
-            <QnaHeader />
+            <QnaHeader onCreated={fetchQuestions} />
 
             {/* 카테고리 + 정렬 */}
             <CategoryTabs

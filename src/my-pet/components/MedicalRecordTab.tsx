@@ -238,7 +238,7 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
                     {(record.diagnosis || record.symptoms) && (
                         <div className="mb-8">
                             <h4 className="text-lg font-semibold text-gray-800 mb-2">진단 및 증상</h4>
-                            <div className="bg-purple-50 p-4 rounded-lg space-y-1">
+                            <div className="bg-blue-50 p-4 rounded-lg space-y-1">
                                 {record.diagnosis && (
                                     <div>
                                         <span className="text-sm font-medium text-gray-400">진단 : </span>
@@ -285,7 +285,7 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
                                 <button
                                     onClick={() => setExpandedTest(!expandedTest)}
                                     className={`w-full flex items-center justify-between p-3 transition-colors rounded-t-lg ${
-                                        expandedTest ? 'bg-purple-400' : 'bg-gray-50'
+                                        expandedTest ? 'bg-blue-500' : 'bg-gray-50'
                                     }`}
                                 >
                                     <span className={`text-base font-medium ${
@@ -315,7 +315,7 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
                                                     </div>
                                                     <div className="col-span-1 text-right">
                                                         {item.amount && (
-                                                            <p className="text-medium text-purple-800">
+                                                            <p className="text-medium text-blue-800">
                                                                 {formatAmount(item.amount)}
                                                             </p>
                                                         )}
@@ -348,7 +348,7 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
                                 <button
                                     onClick={() => setExpandedTreatment(!expandedTreatment)}
                                     className={`w-full flex items-center justify-between p-3 transition-colors rounded-t-lg ${
-                                        expandedTreatment ? 'bg-purple-400' : 'bg-gray-50'
+                                        expandedTreatment ? 'bg-blue-500' : 'bg-gray-50'
                                     }`}
                                 >
                                     <span className={`text-base font-medium ${
@@ -378,7 +378,7 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
                                                     </div>
                                                     <div className="col-span-1 text-right">
                                                         {item.amount && (
-                                                            <p className="text-medium text-purple-800">
+                                                            <p className="text-medium text-blue-800">
                                                                 {formatAmount(item.amount)}
                                                             </p>
                                                         )}
@@ -412,7 +412,7 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
                                 <button
                                     onClick={() => setExpandedMedication(!expandedMedication)}
                                     className={`w-full flex items-center justify-between p-3 transition-colors rounded-t-lg ${
-                                        expandedMedication ? 'bg-purple-400' : 'bg-gray-50'
+                                        expandedMedication ? 'bg-blue-500' : 'bg-gray-50'
                                     }`}
                                 >
                                     <span className={`text-base font-medium ${
@@ -451,7 +451,7 @@ const MedicalRecordTab: React.FC<MedicalRecordTabProps> = ({ petData, onUpdate }
                                                     </div>
                                                     <div className="col-span-1 text-right">
                                                         {item.amount && (
-                                                            <p className="text-medium text-purple-800">
+                                                            <p className="text-medium text-blue-800">
                                                                 {formatAmount(item.amount)}
                                                             </p>
                                                         )}

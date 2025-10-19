@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type {Pet} from "../../types/types.ts";
 import { petApi, convertResponseToPet, handleApiError } from "../../utils/petApi.ts";
+import { useAuth } from "../../../account/hooks/useAuth";
 
 import AIReportTab from "../../components/AIReportTab.tsx";
 import CycleTrackerTab from "../../components/CycleTrackerTab.tsx";
@@ -9,15 +10,23 @@ import WeightLogTab from "../../components/WeighLogTab.tsx";
 
 const HealthReportPage: React.FC = () => {
     const navigate = useNavigate();
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
     const { petId } = useParams<{ petId: string }>();
 
     const [petData, setPetData] = useState<Pet | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'ai' | 'cycle' | 'weight'>('ai');
 
+    // 로그인 검증 - authLoading이 끝난 후에만 체크
+    useEffect(() => {
+        if (!authLoading && !isAuthenticated) {
+            navigate('/login', { state: { message: '로그인이 필요한 서비스입니다.' } });
+        }
+    }, [isAuthenticated, authLoading, navigate]);
+
     useEffect(() => {
         const loadPetData = async () => {
-            if (!petId) {
+            if (!petId || !isAuthenticated) {
                 setIsLoading(false);
                 return;
             }
@@ -38,7 +47,7 @@ const HealthReportPage: React.FC = () => {
         };
 
         loadPetData();
-    }, [petId]);
+    }, [petId, isAuthenticated]);
 
     const handleUpdatePetData = (updatedPet: Pet) => {
         setPetData(updatedPet);

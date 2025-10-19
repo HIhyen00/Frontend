@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { apiClient } from '../../pet-walk/utils/axiosConfig';
+import { apiHelper } from '../utils/axiosConfig';
 
 interface AiChatProps {
     reportId: string;
@@ -17,7 +17,7 @@ const suggestedQuestions = [
     "추천하는 활동이나 운동이 있어?",
 ];
 
-const AiChat: React.FC<AiChatProps> = ({ reportId }) => {
+const AiChat: React.FC<AiChatProps> = ({ reportId, petId }) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -31,7 +31,7 @@ const AiChat: React.FC<AiChatProps> = ({ reportId }) => {
         setIsLoading(true);
 
         try {
-            const response = await apiClient.post<{ answer: string }>(`/pets/{petId}/health-reports/${reportId}/ask-ai`, { question });
+            const response = await apiHelper.post<{ answer: string }>(`/pets/${petId}/health-reports/${reportId}/ask-ai`, { question });
             const aiMessage: Message = { sender: 'ai', text: response.answer };
             setMessages(prev => [...prev, aiMessage]);
         } catch (error) {

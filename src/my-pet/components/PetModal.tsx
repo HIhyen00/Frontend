@@ -315,8 +315,8 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
-            <div className="bg-white rounded-2xl p-4 w-full max-w-lg shadow-xl animate-fade-in-scale">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex justify-center items-center z-50 p-4" onClick={onClose}>
+            <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-4 w-full max-w-lg animate-fade-in-scale" onClick={(e) => e.stopPropagation()}>
                 <div className="p-2 max-h-[90vh] overflow-y-auto">
                     <h2 className="text-2xl font-bold text-gray-800 mb-6">
                         {mode === 'add' ? '새 펫 등록' : '펫 정보 수정'}
@@ -325,7 +325,7 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                     {/* 이미지 업로드 */}
                     <div className="flex flex-col items-center mb-6">
                         <div
-                            className="w-40 h-40 rounded-full bg-gray-100 mb-4 overflow-hidden flex items-center justify-center cursor-pointer border-2 border-dashed border-gray-300 hover:border-indigo-400 transition"
+                            className="w-40 h-40 rounded-full bg-gray-100 mb-4 overflow-hidden flex items-center justify-center cursor-pointer border-2 border-dashed border-gray-300 hover:border-blue-400 transition"
                             onClick={() => fileInputRef.current?.click()}
                         >
                             {imagePreview ? (
@@ -357,13 +357,13 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
 
                     {/* 종류 선택 */}
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">종류</label>
+                        <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">종류</label>
                         <div className="flex gap-2 sm:gap-4">
                             <button
                                 onClick={() => handleTypeChange('dog')}
-                                className={`flex-1 py-3 px-2 sm:px-4 rounded-lg border-2 transition text-center ${
+                                className={`flex-1 py-3 px-2 sm:px-4 rounded-2xl border-2 transition text-center ${
                                     type === 'dog'
-                                        ? 'bg-indigo-500 border-indigo-500 text-white shadow-lg'
+                                        ? 'bg-blue-600 border-blue-600 text-white shadow-lg'
                                         : 'bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200'
                                 }`}
                             >
@@ -372,7 +372,7 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                             </button>
                             <button
                                 onClick={() => handleTypeChange('cat')}
-                                className={`flex-1 py-3 px-2 sm:px-4 rounded-lg border-2 transition text-center ${
+                                className={`flex-1 py-3 px-2 sm:px-4 rounded-2xl border-2 transition text-center ${
                                     type === 'cat'
                                         ? 'bg-orange-500 border-orange-500 text-white shadow-lg'
                                         : 'bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200'
@@ -383,7 +383,7 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                             </button>
                             <button
                                 onClick={() => handleTypeChange('other')}
-                                className={`flex-1 py-3 px-2 sm:px-4 rounded-lg border-2 transition text-center ${
+                                className={`flex-1 py-3 px-2 sm:px-4 rounded-2xl border-2 transition text-center ${
                                     type === 'other'
                                         ? 'bg-gray-500 border-gray-500 text-white shadow-lg'
                                         : 'bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200'
@@ -397,11 +397,11 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
 
                     {/* 성별 선택 */}
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">성별</label>
+                        <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">성별</label>
                         <div className="flex gap-2 sm:gap-4">
                             <button
                                 onClick={() => setGender('남아')}
-                                className={`flex-1 py-3 px-2 sm:px-4 rounded-lg border-2 transition text-center ${
+                                className={`flex-1 py-3 px-2 sm:px-4 rounded-2xl border-2 transition text-center ${
                                     gender === '남아'
                                         ? 'bg-blue-500 border-blue-500 text-white shadow-lg'
                                         : 'bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200'
@@ -412,7 +412,7 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                             </button>
                             <button
                                 onClick={() => setGender('여아')}
-                                className={`flex-1 py-3 px-2 sm:px-4 rounded-lg border-2 transition text-center ${
+                                className={`flex-1 py-3 px-2 sm:px-4 rounded-2xl border-2 transition text-center ${
                                     gender === '여아'
                                         ? 'bg-pink-500 border-pink-500 text-white shadow-lg'
                                         : 'bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200'
@@ -423,7 +423,7 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                             </button>
                             <button
                                 onClick={() => setGender('정보없음')}
-                                className={`flex-1 py-3 px-2 sm:px-4 rounded-lg border-2 transition text-center ${
+                                className={`flex-1 py-3 px-2 sm:px-4 rounded-2xl border-2 transition text-center ${
                                     gender === '정보없음'
                                         ? 'bg-gray-500 border-gray-500 text-white shadow-lg'
                                         : 'bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200'
@@ -438,7 +438,7 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                     {/* 입력 필드들 */}
                     <div className="space-y-4">
                         <div>
-                            <label htmlFor="petName" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="petName" className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                                 이름
                             </label>
                             <input
@@ -446,20 +446,20 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                                 id="petName"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+                                className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                                 placeholder="펫의 이름을 입력해주세요"
                             />
                         </div>
 
                         {/* 품종 선택 */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">품종</label>
+                            <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">품종</label>
                             {type === 'other' ? (
                                 <input
                                     type="text"
                                     value={customBreed}
                                     onChange={(e) => setCustomBreed(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+                                    className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                                     placeholder="품종을 입력해주세요"
                                 />
                             ) : (
@@ -468,7 +468,7 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                                         value={mainBreedId || ''}
                                         onChange={(e) => handleMainBreedChange(e.target.value)}
                                         disabled={isLoadingBreeds}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition appearance-none bg-white"
+                                        className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm appearance-none bg-white"
                                     >
                                         <option value="">
                                             {isLoadingBreeds ? '품종 불러오는 중...' : '주품종을 선택해주세요'}
@@ -488,7 +488,7 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                                             type="text"
                                             value={customBreed}
                                             onChange={(e) => setCustomBreed(e.target.value)}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition mt-2"
+                                            className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm mt-2"
                                             placeholder="품종을 직접 입력해주세요"
                                         />
                                     )}
@@ -499,13 +499,13 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                         {/* 서브 품종 */}
                         {type !== 'other' && mainBreedId && !showCustomBreed && (
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    서브품종 <span className="text-gray-500 text-xs">(선택사항, 믹스견의 경우)</span>
+                                <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
+                                    서브품종 <span className="text-gray-500 text-xs normal-case">(선택사항, 믹스견의 경우)</span>
                                 </label>
                                 <select
                                     value={subBreedId || ''}
                                     onChange={(e) => handleSubBreedChange(e.target.value)}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition appearance-none bg-white"
+                                    className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm appearance-none bg-white"
                                 >
                                     <option value="">서브품종 선택 (선택사항)</option>
                                     {Array.isArray(breedList) && getAvailableSubBreeds().map((breed) => (
@@ -518,7 +518,7 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                         )}
 
                         <div>
-                            <label htmlFor="petDob" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="petDob" className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                                 생년월일
                             </label>
                             <input
@@ -526,18 +526,18 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                                 id="petDob"
                                 value={dob}
                                 onChange={(e) => setDob(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+                                className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                             />
                         </div>
                     </div>
 
                     {/* 중성화 여부 */}
                     <div className="mb-4 mt-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">중성화 여부</label>
+                        <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">중성화 여부</label>
                         <div className="flex gap-2 sm:gap-4">
                             <button
                                 onClick={() => setIsNeutered(false)}
-                                className={`flex-1 py-3 px-2 sm:px-4 rounded-lg border-2 transition text-center ${
+                                className={`flex-1 py-3 px-2 sm:px-4 rounded-2xl border-2 transition text-center ${
                                     !isNeutered
                                         ? 'bg-gray-500 border-gray-500 text-white'
                                         : 'bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200'
@@ -547,7 +547,7 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                             </button>
                             <button
                                 onClick={() => setIsNeutered(true)}
-                                className={`flex-1 py-3 px-2 sm:px-4 rounded-lg border-2 transition text-center ${
+                                className={`flex-1 py-3 px-2 sm:px-4 rounded-2xl border-2 transition text-center ${
                                     isNeutered
                                         ? 'bg-gray-500 border-gray-500 text-white'
                                         : 'bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200'
@@ -560,11 +560,11 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
 
                     {/* 마이크로칩 여부 */}
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">마이크로칩 여부</label>
+                        <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">마이크로칩 여부</label>
                         <div className="flex gap-2 sm:gap-4">
                             <button
                                 onClick={() => setHasMicrochip(false)}
-                                className={`flex-1 py-3 px-2 sm:px-4 rounded-lg border-2 transition text-center ${
+                                className={`flex-1 py-3 px-2 sm:px-4 rounded-2xl border-2 transition text-center ${
                                     !hasMicrochip
                                         ? 'bg-gray-500 border-gray-500 text-white'
                                         : 'bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200'
@@ -574,7 +574,7 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                             </button>
                             <button
                                 onClick={() => setHasMicrochip(true)}
-                                className={`flex-1 py-3 px-2 sm:px-4 rounded-lg border-2 transition text-center ${
+                                className={`flex-1 py-3 px-2 sm:px-4 rounded-2xl border-2 transition text-center ${
                                     hasMicrochip
                                         ? 'bg-gray-500 border-gray-500 text-white'
                                         : 'bg-gray-100 border-gray-200 text-gray-600 hover:bg-gray-200'
@@ -587,28 +587,28 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
 
                     {/* 동물등록증번호 */}
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">동물등록증번호</label>
+                        <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">동물등록증번호</label>
                         <input
                             type="text"
                             value={registrationNumber}
                             onChange={(e) => setRegistrationNumber(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+                            className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                             placeholder="동물등록증번호를 입력해주세요"
                         />
                     </div>
 
                     {/* 동물 등록증 첨부 */}
                     <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">동물 등록증 첨부</label>
+                        <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">동물 등록증 첨부</label>
                         {/* 기존 파일 표시 */}
                         {mode === 'edit' && existingRegistrationUrl && !deleteRegistrationPdf && !registrationFile && (
-                            <div className="mb-2 p-3 bg-gray-50 rounded-lg flex items-center justify-between">
+                            <div className="mb-2 p-3 bg-gray-50 rounded-2xl flex items-center justify-between border border-gray-200">
                                 <div className="flex items-center gap-2">
                                     <i className="fas fa-file-pdf text-red-500"></i>
                                     <span className="text-sm text-gray-600">기존 등록증</span>
                                     <button
                                         onClick={() => window.open(existingRegistrationUrl, '_blank')}
-                                        className="text-xs text-indigo-500 hover:text-indigo-600"
+                                        className="text-xs text-blue-600 hover:text-blue-700 font-semibold"
                                     >
                                         보기
                                     </button>
@@ -626,7 +626,7 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => registrationInputRef.current?.click()}
-                                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                                className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-2xl hover:bg-gray-50 transition"
                             >
                                 <i className="fas fa-paperclip text-gray-500"></i>
                                 <span className="text-sm text-gray-600">
@@ -652,16 +652,16 @@ const PetModal: React.FC<PetModalProps> = ({ isOpen, onClose, onSave, mode, pet 
                     </div>
 
                     {/* 버튼 */}
-                    <div className="flex justify-end gap-4 mt-8">
+                    <div className="flex gap-3 mt-8">
                         <button
                             onClick={onClose}
-                            className="py-2 px-6 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+                            className="flex-1 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-2xl font-semibold text-sm transition-all active:scale-95"
                         >
                             취소
                         </button>
                         <button
                             onClick={handleSave}
-                            className="py-2 px-6 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition"
+                            className="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-semibold text-sm transition-all shadow-lg active:scale-95"
                         >
                             저장
                         </button>

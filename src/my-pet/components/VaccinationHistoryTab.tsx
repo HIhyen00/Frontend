@@ -245,7 +245,7 @@ const VaccinationHistory: React.FC<MedicalRecordPageProps> = ({ pet, onUpdatePet
                         return (
                             <div key={vaccine.vaccineId} className="rounded-lg bg-gray-100">
                                 <div className={`w-full flex items-center justify-between p-3 transition-colors rounded-t-lg ${
-                                    isExpanded ? 'bg-purple-500' : 'bg-gray-50'
+                                    isExpanded ? 'bg-blue-500' : 'bg-gray-50'
                                 }`}>
                                     <button
                                         onClick={() => toggleSection(vaccine.vaccineName)}
@@ -448,16 +448,11 @@ const VaccinationHistory: React.FC<MedicalRecordPageProps> = ({ pet, onUpdatePet
 
             {/* 모달 */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center">
-                    <div
-                        className="fixed inset-0 bg-black bg-opacity-50"
-                        onClick={() => {
-                            closeModal();
-                            setShowDropdown(null);
-                        }}
-                    ></div>
-
-                    <div className="relative bg-white rounded-lg p-6 w-full max-w-md mx-4 z-10">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4" onClick={() => {
+                    closeModal();
+                    setShowDropdown(null);
+                }}>
+                    <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-100 p-6 w-full max-w-md z-10" onClick={(e) => e.stopPropagation()}>
                         <div className="mb-4">
                             <h2 className="text-lg font-semibold text-gray-800 mb-2">
                                 {modalMode === 'edit'
@@ -469,50 +464,50 @@ const VaccinationHistory: React.FC<MedicalRecordPageProps> = ({ pet, onUpdatePet
                         <div>
                             {modalType === 'other' && (
                                 <div className="mb-4">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                                         백신 이름
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.customVaccineName}
                                         onChange={(e) => setFormData(prev => ({ ...prev, customVaccineName: e.target.value }))}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                                         placeholder="백신 이름을 입력하세요"
                                     />
                                 </div>
                             )}
 
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                                     병원 이름
                                 </label>
                                 <input
                                     type="text"
                                     value={formData.hospitalName}
                                     onChange={(e) => setFormData(prev => ({ ...prev, hospitalName: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                                     placeholder="병원 이름을 입력하세요"
                                 />
                             </div>
 
                             <div className="mb-6">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                                     접종 날짜
                                 </label>
                                 <input
                                     type="date"
                                     value={formData.vaccinationDate}
                                     onChange={(e) => setFormData(prev => ({ ...prev, vaccinationDate: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                                     max={getTodayDate()}
                                 />
                             </div>
 
-                            <div className="flex justify-end space-x-3">
+                            <div className="flex gap-3">
                                 <button
                                     type="button"
                                     onClick={closeModal}
-                                    className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                                    className="flex-1 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-2xl font-semibold text-sm transition-all active:scale-95"
                                 >
                                     취소
                                 </button>
@@ -520,7 +515,7 @@ const VaccinationHistory: React.FC<MedicalRecordPageProps> = ({ pet, onUpdatePet
                                     type="button"
                                     onClick={handleSubmit}
                                     disabled={loading}
-                                    className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors disabled:opacity-50"
+                                    className="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white rounded-2xl font-semibold text-sm transition-all shadow-lg active:scale-95"
                                 >
                                     {loading ? '처리 중...' : (modalMode === 'edit' ? '수정' : '추가')}
                                 </button>

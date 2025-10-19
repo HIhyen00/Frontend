@@ -40,7 +40,7 @@ function Header() {
             <div className="flex items-center justify-between w-full max-w-7xl mx-auto h-full px-6">
                 <div className="flex items-center space-x-2">
                     <div className="flex items-center cursor-pointer">
-                        <FaPaw className={"text-2xl text-purple-600"}/>
+                        <FaPaw className={"text-2xl text-blue-600"}/>
                         <h1 onClick={() => goToPage("/")}
                             className={"text-xl font-bold ml-2 text-gray-900"}>MyRealPet</h1>
                     </div>
@@ -50,7 +50,7 @@ function Header() {
                 <nav className="hidden md:flex items-center space-x-8">
                     {NAV_ITEMS.map((item, index) => (
                         <a key={index} onClick={() => goToPage(item.path)}
-                           className={"font-medium transition-colors hover:text-purple-500 cursor-pointer text-gray-700"}>{item.name}</a>
+                           className={"font-medium transition-colors hover:text-blue-600 cursor-pointer text-gray-700"}>{item.name}</a>
                     ))}
                 </nav>
 
@@ -62,7 +62,7 @@ function Header() {
                                     e.stopPropagation();
                                     setUserMenuOpen(!userMenuOpen);
                                 }}
-                                className={"flex items-center space-x-2 px-4 py-2 font-medium rounded-full transition-all duration-300 bg-gradient-to-r from-purple-600 to-blue-500 text-white hover:shadow-lg hover:shadow-purple-200"}>
+                                className={"flex items-center space-x-2 px-4 py-2 font-semibold rounded-lg transition-all duration-300 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg"}>
                                 <FaUser className="text-sm"/>
                                 <span>{user?.username}</span>
                             </button>
@@ -92,7 +92,7 @@ function Header() {
                     ) : (
                         <button
                             onClick={() => navigate('/login')}
-                            className={"hidden md:block px-5 py-2 font-medium rounded-full transition-all duration-300 bg-gradient-to-r from-purple-600 to-blue-500 text-white hover:shadow-lg hover:shadow-purple-200"}>
+                            className={"hidden md:block px-5 py-2.5 font-semibold rounded-lg transition-all duration-300 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg"}>
                             로그인
                         </button>
                     )}
@@ -111,40 +111,61 @@ function Header() {
 
             {/* Mobile Menu */}
             {mobileMenuOpen && (
-                <div className="md:hidden absolute top-16 left-0 right-0 bg-white shadow-lg py-4 px-6 z-50">
-                    <nav className="flex flex-col space-y-4">
+                <div className="md:hidden absolute top-16 left-0 right-0 bg-white shadow-xl border-t border-gray-100 z-50 max-h-[calc(100vh-4rem)] overflow-y-auto">
+                    <nav className="flex flex-col py-4 px-6">
                         {NAV_ITEMS.map((item, index) => (
-                            <a key={index} onClick={() => goToPage(item.path)}
-                               className="text-gray-800 hover:text-purple-600 transition-colors font-medium cursor-pointer">{item.name}</a>
+                            <a
+                                key={index}
+                                onClick={() => {
+                                    goToPage(item.path);
+                                    setMobileMenuOpen(false);
+                                }}
+                                className="py-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors font-medium cursor-pointer rounded-lg px-3"
+                            >
+                                {item.name}
+                            </a>
                         ))}
 
                         {isAuthenticated ? (
-                            <div className="flex flex-col space-y-2 pt-2 border-t border-gray-200">
-                                <div className="flex items-center space-x-2 py-2">
-                                    <FaUser className="text-purple-600"/>
-                                    <span className="text-gray-800 font-medium">{user?.username}</span>
+                            <div className="flex flex-col space-y-3 pt-4 mt-4 border-t border-gray-200">
+                                <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
+                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <FaUser className="text-blue-600"/>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500">로그인됨</p>
+                                        <p className="text-gray-900 font-semibold">{user?.username}</p>
+                                    </div>
                                 </div>
                                 <button
                                     onClick={() => {
                                         navigate('/my-page');
                                         setMobileMenuOpen(false);
                                     }}
-                                    className="w-full py-2 bg-blue-500 text-white rounded-full font-medium flex items-center justify-center space-x-2">
+                                    className="w-full py-3 bg-gray-100 text-gray-800 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                                >
                                     <FaUser/>
                                     <span>마이페이지</span>
                                 </button>
                                 <button
-                                    onClick={openLogoutModal}
-                                    className="w-full py-2 bg-red-500 text-white rounded-full font-medium flex items-center justify-center space-x-2">
+                                    onClick={() => {
+                                        openLogoutModal();
+                                        setMobileMenuOpen(false);
+                                    }}
+                                    className="w-full py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                                >
                                     <FaSignOutAlt/>
                                     <span>로그아웃</span>
                                 </button>
                             </div>
                         ) : (
                             <button
-                                onClick={() => navigate('/login')}
-                                className="w-full mt-2 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-full font-medium">
-                                시작하기
+                                onClick={() => {
+                                    navigate('/login');
+                                    setMobileMenuOpen(false);
+                                }}
+                                className="w-full mt-4 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                                로그인
                             </button>
                         )}
                     </nav>

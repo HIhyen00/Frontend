@@ -385,11 +385,11 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
         return (
         <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium text-gray-700">{title}</label>
+                <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">{title}</label>
                 <button
                     type="button"
                     onClick={() => openItemModal(type)}
-                    className="text-sm text-indigo-600 hover:text-indigo-800"
+                    className="text-sm text-blue-600 hover:text-blue-800 font-semibold"
                 >
                     + 추가
                 </button>
@@ -453,13 +453,8 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
 
     return (
         <>
-            <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
-                <div
-                    className="fixed inset-0"
-                    onClick={onClose}
-                ></div>
-
-                <div className="bg-white rounded-2xl p-4 w-full max-w-2xl shadow-xl relative z-10 my-8">
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex justify-center items-center z-50 p-4" onClick={onClose}>
+                <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-4 w-full max-w-2xl relative z-10 my-8" onClick={(e) => e.stopPropagation()}>
                     <div className="p-2 max-h-[80vh] overflow-y-auto">
                         {/* 헤더 */}
                         <div className="flex justify-between items-center mb-6">
@@ -475,9 +470,9 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                         </div>
 
                         {/* 청구서 업로드 영역 (맨 위!) */}
-                        <div className="mb-6 p-4 bg-indigo-50 rounded-lg border-2 border-dashed border-indigo-300">
+                        <div className="mb-6 p-4 bg-blue-50 rounded-2xl border-2 border-dashed border-blue-300">
                             <div className="flex justify-between items-center mb-2">
-                                <label className="block text-sm font-medium text-gray-700">
+                                <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                                     청구서 업로드
                                 </label>
                                 {canAutoAnalyze && (
@@ -485,7 +480,7 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                                         type="button"
                                         onClick={handleAutoAnalyze}
                                         disabled={analyzing}
-                                        className="px-3 py-1 bg-indigo-500 text-white text-sm rounded-md hover:bg-indigo-600 disabled:opacity-50"
+                                        className="px-4 py-2 bg-blue-600 text-white text-sm rounded-2xl hover:bg-blue-700 disabled:opacity-50 font-semibold shadow-md transition-all active:scale-95"
                                     >
                                         {analyzing ? '분석 중...' : '🔁 GPT 자동 분석'}
                                     </button>
@@ -516,7 +511,7 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                                 <button
                                     type="button"
                                     onClick={() => receiptInputRef.current?.click()}
-                                    className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-indigo-400 hover:bg-indigo-50 transition"
+                                    className="w-full py-3 border-2 border-dashed border-gray-300 rounded-2xl hover:border-blue-400 hover:bg-blue-50 transition"
                                 >
                                     <i className="fas fa-upload text-gray-400 mr-2"></i>
                                     <span className="text-sm text-gray-600">청구서 이미지 선택</span>
@@ -533,35 +528,35 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
 
                         {/* 진료 날짜 */}
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                진료 날짜 *
+                            <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
+                                진료 날짜 <span className="text-red-600">*</span>
                             </label>
                             <input
                                 type="date"
                                 value={visitDate}
                                 onChange={(e) => setVisitDate(e.target.value)}
                                 max={getTodayDate()}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                             />
                         </div>
 
                         {/* 병원 이름 */}
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                병원 이름 *
+                            <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
+                                병원 이름 <span className="text-red-600">*</span>
                             </label>
                             <input
                                 type="text"
                                 value={hospitalName}
                                 onChange={(e) => setHospitalName(e.target.value)}
                                 placeholder="병원 이름을 입력하세요"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                             />
                         </div>
 
                         {/* 병원 전화번호 */}
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                                 병원 전화번호
                             </label>
                             <input
@@ -569,13 +564,13 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                                 value={hospitalNumber}
                                 onChange={(e) => setHospitalNumber(e.target.value)}
                                 placeholder="전화번호를 입력하세요"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                             />
                         </div>
 
                         {/* 병원 주소 */}
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                                 병원 주소
                             </label>
                             <input
@@ -583,13 +578,13 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                                 value={hospitalAddress}
                                 onChange={(e) => setHospitalAddress(e.target.value)}
                                 placeholder="주소를 입력하세요"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                             />
                         </div>
 
                         {/* 진단 */}
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                                 진단
                             </label>
                             <textarea
@@ -597,13 +592,13 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                                 onChange={(e) => setDiagnosis(e.target.value)}
                                 placeholder="진단 내용을 입력하세요"
                                 rows={3}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-sm shadow-sm"
                             />
                         </div>
 
                         {/* 증상 */}
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                                 증상
                             </label>
                             <textarea
@@ -611,7 +606,7 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                                 onChange={(e) => setSymptoms(e.target.value)}
                                 placeholder="증상을 입력하세요"
                                 rows={3}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-sm shadow-sm"
                             />
                         </div>
 
@@ -626,7 +621,7 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
 
                         {/* 총 금액 */}
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                                 총 금액
                             </label>
                             <input
@@ -634,13 +629,13 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                                 value={totalAmount || ''}
                                 onChange={(e) => setTotalAmount(parseInt(e.target.value) || 0)}
                                 placeholder="총 금액을 입력하세요"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                             />
                         </div>
 
                         {/* 부가세 */}
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                                 부가세
                             </label>
                             <input
@@ -648,20 +643,20 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                                 value={vatAmount || ''}
                                 onChange={(e) => setVatAmount(parseInt(e.target.value) || 0)}
                                 placeholder="부가세를 입력하세요"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                             />
                         </div>
 
                         {/* 첨부파일 */}
                         <div className="mb-6">
                             <div className="flex justify-between items-center mb-2">
-                                <label className="block text-sm font-medium text-gray-700">
+                                <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                                     첨부파일
                                 </label>
                                 <button
                                     type="button"
                                     onClick={() => attachmentInputRef.current?.click()}
-                                    className="text-sm text-indigo-600 hover:text-indigo-800"
+                                    className="text-sm text-blue-600 hover:text-blue-800 font-semibold"
                                 >
                                     + 파일 추가
                                 </button>
@@ -698,11 +693,11 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                         </div>
 
                         {/* 버튼 */}
-                        <div className="flex justify-end space-x-3">
+                        <div className="flex gap-3">
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                                className="flex-1 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-2xl font-semibold text-sm transition-all active:scale-95"
                             >
                                 취소
                             </button>
@@ -710,7 +705,7 @@ const MedicalRecordRegisterModal: React.FC<MedicalRecordRegisterModalProps> = ({
                                 type="button"
                                 onClick={handleSubmit}
                                 disabled={loading}
-                                className="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors disabled:opacity-50"
+                                className="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white rounded-2xl font-semibold text-sm transition-all shadow-lg active:scale-95"
                             >
                                 {loading ? '처리 중...' : (mode === 'edit' ? '수정' : '등록')}
                             </button>
