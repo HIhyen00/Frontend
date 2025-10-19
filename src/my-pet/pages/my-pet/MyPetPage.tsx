@@ -203,7 +203,7 @@ const MyPetPage: React.FC = () => {
                 <button
                     onClick={handleAddPet}
                     disabled={isLoading}
-                    className="bg-indigo-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-600 transition-colors duration-300 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-blue-600 text-white font-semibold py-3.5 px-6 rounded-2xl hover:bg-blue-700 transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <i className="fas fa-plus mr-2"></i>새 펫 등록
                 </button>

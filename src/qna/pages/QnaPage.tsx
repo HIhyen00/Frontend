@@ -97,17 +97,17 @@ const QnaPage: React.FC = () => {
                     <button
                         onClick={() => setPage((p) => Math.max(p - 1, 0))}
                         disabled={page === 0}
-                        className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         이전
                     </button>
-                    <span className="px-2 text-sm">
+                    <span className="px-2 text-sm font-medium">
             {page + 1} / {totalPages}
           </span>
                     <button
                         onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))}
                         disabled={page === totalPages - 1}
-                        className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         다음
                     </button>
