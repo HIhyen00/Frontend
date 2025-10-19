@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import type { Pet, WeightRecord, HealthNote } from '../types/types.ts';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { apiClient } from '../../pet-walk/utils/axiosConfig';
+import axiosInstance, { apiHelper } from '../utils/axiosConfig';
 
 interface WeightLogTabProps {
     petData: Pet;
@@ -29,8 +29,8 @@ const WeightLogTab: React.FC<WeightLogTabProps> = ({ petData }) => {
         setIsLoading(true);
         try {
             const [weights, notes] = await Promise.all([
-                apiClient.get<WeightRecord[]>(`/pets/${petData.id}/weights`),
-                apiClient.get<HealthNote[]>(`/pets/${petData.id}/health-notes`)
+                apiHelper.get<WeightRecord[]>(`/pets/${petData.id}/weights`),
+                apiHelper.get<HealthNote[]>(`/pets/${petData.id}/health-notes`)
             ]);
             setWeightRecords(weights);
             setHealthNotes(notes);
@@ -56,7 +56,7 @@ const WeightLogTab: React.FC<WeightLogTabProps> = ({ petData }) => {
             return;
         }
         try {
-            await apiClient.post(`/pets/${petData.id}/weights`, { weight: weighValue, recordDate: date });
+            await apiHelper.post(`/pets/${petData.id}/weights`, { weight: weighValue, recordDate: date });
             setWeigh('');
             fetchData(); // 데이터 새로고침
         } catch (error) {
@@ -71,7 +71,7 @@ const WeightLogTab: React.FC<WeightLogTabProps> = ({ petData }) => {
         }
         const newNote = { recordDate: date, mood, poop, pee, symptoms: symptoms.trim() };
         try {
-            await apiClient.post(`/pets/${petData.id}/health-notes`, newNote);
+            await apiHelper.post(`/pets/${petData.id}/health-notes`, newNote);
             setSymptoms('');
             setMood('normal');
             setPoop('normal');

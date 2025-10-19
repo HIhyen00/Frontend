@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Pet } from '../../types/types.ts';
 import PetProfileCard from '../../components/PetProfileCard.tsx';
 import PetModal from '../../components/PetModal.tsx';
 import AlertNotification from '../../../shared/components/AlertNotification.tsx';
 import ConfirmModal from '../../components/ConfirmModel.tsx';
 import { petApi, convertResponseToPet, handleApiError } from '../../utils/petApi.ts';
+import { useAuth } from '../../../account/hooks/useAuth';
 
 
 // PetModal에서 전달하는 데이터 타입을 정의합니다.
@@ -30,6 +32,8 @@ interface PetFormData {
 }
 
 const MyPetPage: React.FC = () => {
+    const navigate = useNavigate();
+    const { isAuthenticated, isLoading: authLoading } = useAuth();
     const [pets, setPets] = useState<Pet[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
@@ -39,10 +43,19 @@ const MyPetPage: React.FC = () => {
     const [petToDeleteId, setPetToDeleteId] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
+    // 로그인 검증 - authLoading이 끝난 후에만 체크
+    useEffect(() => {
+        if (!authLoading && !isAuthenticated) {
+            navigate('/login', { state: { message: '로그인이 필요한 서비스입니다.' } });
+        }
+    }, [isAuthenticated, authLoading, navigate]);
+
     // 펫 목록 로드 - API 연결
     useEffect(() => {
-        loadPets();
-    }, []);
+        if (isAuthenticated) {
+            loadPets();
+        }
+    }, [isAuthenticated]);
 
     const loadPets = async () => {
         try {

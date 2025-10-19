@@ -84,13 +84,8 @@ const MedicalRecordItemModal: React.FC<MedicalRecordItemModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center">
-            <div
-                className="fixed inset-0 bg-black bg-opacity-50"
-                onClick={onClose}
-            ></div>
-
-            <div className="relative bg-white rounded-lg w-full max-w-md mx-4 z-10">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-md p-4" onClick={onClose}>
+            <div className="relative bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-md z-10" onClick={(e) => e.stopPropagation()}>
                 <div className="px-6 py-4 border-b flex justify-between items-center">
                     <h3 className="text-lg font-semibold text-gray-800">
                         {getTitle()} {initialData ? '수정' : '추가'}
@@ -106,15 +101,15 @@ const MedicalRecordItemModal: React.FC<MedicalRecordItemModalProps> = ({
                 <div className="p-6">
                     {/* 항목 이름 */}
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            항목 이름 *
+                        <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
+                            항목 이름 <span className="text-red-600">*</span>
                         </label>
                         <input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="항목 이름을 입력하세요"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                         />
                     </div>
 
@@ -123,7 +118,7 @@ const MedicalRecordItemModal: React.FC<MedicalRecordItemModalProps> = ({
                         <>
                             {/* 복용 빈도 */}
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                                     복용 빈도
                                 </label>
                                 <input
@@ -131,13 +126,13 @@ const MedicalRecordItemModal: React.FC<MedicalRecordItemModalProps> = ({
                                     value={frequency}
                                     onChange={(e) => setFrequency(e.target.value)}
                                     placeholder="예: 1일 2회"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                                 />
                             </div>
 
                             {/* 처방일수 */}
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                                     처방일수
                                 </label>
                                 <input
@@ -146,7 +141,7 @@ const MedicalRecordItemModal: React.FC<MedicalRecordItemModalProps> = ({
                                     onChange={(e) => setDays(e.target.value ? parseInt(e.target.value) : '')}
                                     placeholder="처방일수를 입력하세요"
                                     min="1"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                                 />
                             </div>
                         </>
@@ -154,7 +149,7 @@ const MedicalRecordItemModal: React.FC<MedicalRecordItemModalProps> = ({
 
                     {/* 수량 */}
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                             수량
                         </label>
                         <input
@@ -163,13 +158,13 @@ const MedicalRecordItemModal: React.FC<MedicalRecordItemModalProps> = ({
                             onChange={(e) => setQuantity(e.target.value ? parseInt(e.target.value) : '')}
                             placeholder="수량을 입력하세요"
                             min="1"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                         />
                     </div>
 
                     {/* 단가 */}
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                             단가
                         </label>
                         <input
@@ -178,13 +173,13 @@ const MedicalRecordItemModal: React.FC<MedicalRecordItemModalProps> = ({
                             onChange={(e) => setUnitPrice(e.target.value ? parseInt(e.target.value) : '')}
                             placeholder="단가를 입력하세요"
                             min="0"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm"
                         />
                     </div>
 
                     {/* 금액 */}
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                             금액
                         </label>
                         <input
@@ -193,13 +188,13 @@ const MedicalRecordItemModal: React.FC<MedicalRecordItemModalProps> = ({
                             onChange={(e) => setAmount(e.target.value ? parseInt(e.target.value) : '')}
                             placeholder="금액을 입력하세요 (자동계산됨)"
                             min="0"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50"
+                            className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm shadow-sm bg-gray-50"
                         />
                     </div>
 
                     {/* 메모 */}
                     <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-xs font-bold text-gray-900 mb-2.5 uppercase tracking-wider">
                             메모
                         </label>
                         <textarea
@@ -207,23 +202,23 @@ const MedicalRecordItemModal: React.FC<MedicalRecordItemModalProps> = ({
                             onChange={(e) => setNotes(e.target.value)}
                             placeholder="추가 정보를 입력하세요"
                             rows={3}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-sm shadow-sm"
                         />
                     </div>
 
                     {/* 버튼 */}
-                    <div className="flex justify-end space-x-3">
+                    <div className="flex gap-3">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                            className="flex-1 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-2xl font-semibold text-sm transition-all active:scale-95"
                         >
                             취소
                         </button>
                         <button
                             type="button"
                             onClick={handleSubmit}
-                            className="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors"
+                            className="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-semibold text-sm transition-all shadow-lg active:scale-95"
                         >
                             {initialData ? '수정' : '추가'}
                         </button>

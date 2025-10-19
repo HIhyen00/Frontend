@@ -27,8 +27,8 @@ const RouteModal: React.FC<RouteModalProps> = ({
     if (!show) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-            <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 border border-gray-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md" onClick={onCancel}>
+            <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 border border-gray-100" onClick={(e) => e.stopPropagation()}>
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">산책로 저장</h2>
 
                 <div className="space-y-5 mb-8">

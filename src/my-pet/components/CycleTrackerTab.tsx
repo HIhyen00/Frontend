@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import type { Pet } from "../types/types.ts";
 import Calendar from "react-calendar";
 import 'react-calendar/dist/Calendar.css';
-import { apiClient } from "../../pet-walk/utils/axiosConfig.ts";
+import { apiHelper } from "../utils/axiosConfig";
 
 // 백엔드 DTO와 일치하는 타입 정의
 interface PetCycle {
@@ -42,7 +42,7 @@ const CycleTrackerTab: React.FC<CycleTrackerTabProps> = ({ petData }) => {
         if (!petData?.id) return;
         setIsLoading(true);
         try {
-            const data = await apiClient.get<PetCycle[]>(`/pets/${petData.id}/cycles`);
+            const data = await apiHelper.get<PetCycle[]>(`/pets/${petData.id}/cycles`);
             setCycles(data);
         } catch (error) {
             console.error("Failed to fetch cycles", error);
@@ -90,7 +90,7 @@ const CycleTrackerTab: React.FC<CycleTrackerTabProps> = ({ petData }) => {
         };
 
         try {
-            await apiClient.post(`/pets/${petData.id}/cycles`, newCycle);
+            await apiHelper.post(`/pets/${petData.id}/cycles`, newCycle);
             // 성공 후 입력 필드 초기화 및 목록 새로고침
             setStartDate(formatDate(new Date()));
             setEndDate("");
@@ -104,7 +104,7 @@ const CycleTrackerTab: React.FC<CycleTrackerTabProps> = ({ petData }) => {
     const handleDeleteCycle = async (cycleId: number) => {
         if (!petData?.id) return;
         try {
-            await apiClient.delete(`/pets/${petData.id}/cycles/${cycleId}`);
+            await apiHelper.delete(`/pets/${petData.id}/cycles/${cycleId}`);
             fetchCycles(); // 삭제 후 목록 새로고침
         } catch (error) {
             console.error("Failed to delete cycle", error);

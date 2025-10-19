@@ -1,4 +1,9 @@
 @import "tailwindcss";
+
+* {
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", sans-serif;
+}
+
 button {
     cursor: pointer;
 }

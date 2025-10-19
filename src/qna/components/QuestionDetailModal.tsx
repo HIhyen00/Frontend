@@ -81,11 +81,11 @@ const QuestionDetailModal: React.FC<Props> = ({ question, currentUserId, onClose
 
     return (
         <div
-            className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-start z-50"
+            className="fixed inset-0 bg-black/60 backdrop-blur-md flex justify-center items-start z-50 p-4"
             onClick={onClose}
         >
             <div
-                className="relative bg-white rounded-lg w-11/12 md:w-2/3 max-h-[80vh] overflow-y-auto p-6 shadow-lg"
+                className="relative bg-white rounded-3xl w-11/12 md:w-2/3 max-h-[90vh] overflow-y-auto p-8 shadow-2xl border border-gray-100 mt-20"
                 onClick={(e) => e.stopPropagation()} // 모달 내부 클릭 시 닫기 방지
             >
                 {/* 닫기 버튼 */}
@@ -105,23 +105,24 @@ const QuestionDetailModal: React.FC<Props> = ({ question, currentUserId, onClose
                 <div className="space-y-3">
                     {answers.length === 0 && <p className="text-gray-500">답변이 없습니다.</p>}
                     {answers.map((a) => (
-                        <div key={a.id} className="p-3 border rounded bg-gray-50">
+                        <div key={a.id} className="p-4 border border-gray-200 rounded-2xl bg-white shadow-sm">
                             {editingId === a.id ? (
                                 <div>
                   <textarea
                       value={editingContent}
                       onChange={(e) => setEditingContent(e.target.value)}
-                      className="w-full border p-2 rounded mb-2"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-sm shadow-sm mb-3"
+                      rows={3}
                   />
                                     <div className="flex gap-2">
                                         <button
-                                            className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 font-semibold text-sm transition-all shadow-md active:scale-95"
                                             onClick={() => handleUpdate(a.id)}
                                         >
                                             저장
                                         </button>
                                         <button
-                                            className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
+                                            className="px-4 py-2 bg-gray-100 text-gray-900 rounded-2xl hover:bg-gray-200 font-semibold text-sm transition-all active:scale-95"
                                             onClick={() => setEditingId(null)}
                                         >
                                             취소
@@ -134,19 +135,19 @@ const QuestionDetailModal: React.FC<Props> = ({ question, currentUserId, onClose
                                     <small className="text-gray-400">작성자 ID: {a.userId}</small>
                                     <div className="mt-2 flex flex-wrap gap-2 text-sm">
                                         <button
-                                            className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                                            className="px-3 py-1.5 bg-gray-100 border border-gray-200 rounded-xl hover:bg-gray-200 transition-all font-medium"
                                             onClick={() => handleVote(a.id, "UP")}
                                         >
                                             👍 {a.upvoteCount}
                                         </button>
                                         <button
-                                            className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                                            className="px-3 py-1.5 bg-gray-100 border border-gray-200 rounded-xl hover:bg-gray-200 transition-all font-medium"
                                             onClick={() => handleVote(a.id, "DOWN")}
                                         >
                                             👎 {a.downvoteCount}
                                         </button>
                                         <button
-                                            className="px-2 py-1 bg-red-200 rounded hover:bg-red-300"
+                                            className="px-3 py-1.5 bg-red-50 border border-red-200 text-red-700 rounded-xl hover:bg-red-100 transition-all font-medium"
                                             onClick={() => handleReport(a.id)}
                                         >
                                             ⚠️ 신고
@@ -154,7 +155,7 @@ const QuestionDetailModal: React.FC<Props> = ({ question, currentUserId, onClose
                                         {currentUserId === a.userId && (
                                             <>
                                                 <button
-                                                    className="px-2 py-1 bg-blue-200 rounded hover:bg-blue-300"
+                                                    className="px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-xl hover:bg-blue-100 transition-all font-medium"
                                                     onClick={() => {
                                                         setEditingId(a.id);
                                                         setEditingContent(a.content);
@@ -163,7 +164,7 @@ const QuestionDetailModal: React.FC<Props> = ({ question, currentUserId, onClose
                                                     수정
                                                 </button>
                                                 <button
-                                                    className="px-2 py-1 bg-gray-300 rounded hover:bg-gray-400"
+                                                    className="px-3 py-1.5 bg-gray-100 border border-gray-200 rounded-xl hover:bg-gray-200 transition-all font-medium"
                                                     onClick={() => handleDelete(a.id)}
                                                 >
                                                     삭제
@@ -183,11 +184,12 @@ const QuestionDetailModal: React.FC<Props> = ({ question, currentUserId, onClose
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
               placeholder="답변을 작성하세요..."
-              className="w-full border p-3 rounded mb-2"
+              className="w-full px-4 py-3.5 border border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-sm shadow-sm mb-3"
+              rows={4}
           />
                     <button
                         onClick={handleCreate}
-                        className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
+                        className="px-6 py-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all font-semibold shadow-lg active:scale-95"
                     >
                         답변 작성
                     </button>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { apiClient } from '../../pet-walk/utils/axiosConfig';
+import { apiHelper } from '../utils/axiosConfig';
 import type { Pet } from '../types/types';
 import MissionCalendar from './MissionCalendar'; // 캘린더 컴포넌트 import
 
@@ -149,9 +149,9 @@ const DailyMissionTab: React.FC<DailyMissionTabProps> = ({ petData }) => {
 
             // API 호출들을 병렬로 처리하여 성능 향상
             const [missionsData, historyData, statsData] = await Promise.all([
-                apiClient.get<DailyMission[]>('/users/missions'),
-                apiClient.get<MissionCompletion[]>(`/users/${userId}/missions/history`, { params: { year, month } }),
-                apiClient.get<MissionStatsResponse>(`/users/${userId}/missions/stats`)
+                apiHelper.get<DailyMission[]>('/users/missions'),
+                apiHelper.get<MissionCompletion[]>(`/users/${userId}/missions/history`, { params: { year, month } }),
+                apiHelper.get<MissionStatsResponse>(`/users/${userId}/missions/stats`)
             ]);
 
             // 1. 전체 미션 목록 설정
@@ -203,9 +203,9 @@ const DailyMissionTab: React.FC<DailyMissionTabProps> = ({ petData }) => {
 
         try {
             if (wasCompleted) {
-                await apiClient.delete(`/users/${userId}/missions/${missionId}/completions`);
+                await apiHelper.delete(`/users/${userId}/missions/${missionId}/completions`);
             } else {
-                await apiClient.post(`/users/${userId}/missions/${missionId}/completions`);
+                await apiHelper.post(`/users/${userId}/missions/${missionId}/completions`);
             }
             // 데이터 일관성을 위해 모든 정보를 다시 불러옴
             await fetchMissionsAndCompletions();
@@ -226,7 +226,7 @@ const DailyMissionTab: React.FC<DailyMissionTabProps> = ({ petData }) => {
     return (
         <div className="bg-white rounded-2xl shadow-lg p-6 animate-fade-in">
             <div className="text-center mb-8">
-                <div className="inline-block bg-purple-100 text-purple-700 font-bold py-2 px-4 rounded-full text-lg shadow-sm">
+                <div className="inline-block bg-blue-100 text-blue-700 font-bold py-2 px-4 rounded-full text-lg shadow-sm">
                     {title}
                 </div>
                 <p className="text-md text-gray-500 mt-2">총 {totalCompletions}개의 미션을 완료했어요!</p>

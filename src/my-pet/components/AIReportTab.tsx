@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { Pet, AIReport, SurveyAnswers, InBodyReport, PremiumQuestion } from "../types/types.ts";
-import { apiClient } from '../../pet-walk/utils/axiosConfig';
 import axiosInstance from "../utils/axiosConfig.ts";
 import HealthSurvey from "./HealthSurvey.tsx";
 import InBodyResult from "./InBodyResult.tsx";
@@ -13,6 +12,7 @@ interface AIReportTabProps {
 const AIReportTab: React.FC<AIReportTabProps> = ({ pet, onUpdatePet }) => {
     const [view, setView] = useState<'idle' | 'survey' | 'result'>('idle');
     const [activeResult, setActiveResult] = useState<InBodyReport | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleStartSurvey = () => {
         const today = new Date();
@@ -94,6 +94,7 @@ const AIReportTab: React.FC<AIReportTabProps> = ({ pet, onUpdatePet }) => {
         }
 
         try {
+            setIsLoading(true);
             const surveyResult = {
                 answers,
                 questions: questions.map(q => ({
@@ -168,7 +169,8 @@ const AIReportTab: React.FC<AIReportTabProps> = ({ pet, onUpdatePet }) => {
         catch (error) {
             console.error('건강 리포트 생성 실패:', error);
             alert('리포트 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
-            return;
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -184,6 +186,29 @@ const AIReportTab: React.FC<AIReportTabProps> = ({ pet, onUpdatePet }) => {
     const handleReturnToIdle = () => {
         setView('idle');
         setActiveResult(null);
+    }
+
+    if (isLoading) {
+        return (
+            <div className="fixed inset-0 bg-white bg-opacity-95 flex items-center justify-center z-50">
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl p-10 max-w-md w-full mx-4 text-center shadow-2xl border-2 border-indigo-200">
+                    <div className="relative mb-8">
+                        <div className="animate-spin rounded-full h-24 w-24 border-t-4 border-b-4 border-indigo-600 mx-auto"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="text-4xl">🤖</div>
+                        </div>
+                    </div>
+                    <h3 className="text-3xl font-bold text-indigo-900 mb-4">AI 분석 중...</h3>
+                    <p className="text-indigo-700 mb-3 text-lg font-medium">설문 결과를 분석하고 있습니다.</p>
+                    <p className="text-indigo-600">잠시만 기다려주세요 (최대 1분)</p>
+                    <div className="mt-8 flex justify-center space-x-3">
+                        <div className="w-4 h-4 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                        <div className="w-4 h-4 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        <div className="w-4 h-4 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     if (view === 'survey') {

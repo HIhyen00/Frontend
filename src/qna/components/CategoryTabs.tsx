@@ -28,8 +28,8 @@ const CategoryTabs: React.FC<Props> = ({
                 <button
                     className={`px-4 py-2 rounded whitespace-nowrap ${
                         !activeCategory
-                            ? "font-bold border-b-2 border-purple-500 text-purple-600"
-                            : "text-gray-500 hover:text-purple-600"
+                            ? "font-bold border-b-2 border-blue-500 text-blue-600"
+                            : "text-gray-500 hover:text-blue-600"
                     }`}
                     onClick={() => setActiveCategory(undefined)}
                 >
@@ -40,8 +40,8 @@ const CategoryTabs: React.FC<Props> = ({
                         key={cat}
                         className={`px-4 py-2 rounded whitespace-nowrap ${
                             activeCategory === cat
-                                ? "font-bold border-b-2 border-purple-500 text-purple-600"
-                                : "text-gray-500 hover:text-purple-600"
+                                ? "font-bold border-b-2 border-blue-500 text-blue-600"
+                                : "text-gray-500 hover:text-blue-600"
                         }`}
                         onClick={() => setActiveCategory(cat)}
                     >
@@ -54,7 +54,7 @@ const CategoryTabs: React.FC<Props> = ({
             <select
                 value={sortValue}
                 onChange={(e) => onSortChange(e.target.value)}
-                className="border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-sm font-medium"
+                className="border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm font-medium"
             >
                 {sortOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>

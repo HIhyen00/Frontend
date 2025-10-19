@@ -14,9 +14,9 @@ const colorMap: Record<string, { bar: string; text: string }> = {
     green: { bar: 'bg-green-500', text: 'text-green-500' },
     orange: { bar: 'bg-orange-500', text: 'text-orange-500' },
     yellow: { bar: 'bg-yellow-500', text: 'text-yellow-500' },
-    purple: { bar: 'bg-purple-500', text: 'text-purple-500' },
+    purple: { bar: 'bg-indigo-500', text: 'text-indigo-500' },
     teal: { bar: 'bg-teal-500', text: 'text-teal-500' },
-    pink: { bar: 'bg-pink-500', text: 'text-pink-500' },
+    pink: { bar: 'bg-rose-500', text: 'text-rose-500' },
 };
 
 const ScoreBar: React.FC<{ score: number; label: string; color: keyof typeof colorMap }> = ({ score, label, color }) => (

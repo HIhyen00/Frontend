@@ -29,6 +29,17 @@ export const setupResponseInterceptor = (axiosInstance: AxiosInstance) => {
   axiosInstance.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
+      // 에러 로깅 (개발 환경에서만)
+      if (import.meta.env.DEV) {
+        console.error('API 에러 발생:', {
+          url: error.config?.url,
+          method: error.config?.method,
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message,
+        });
+      }
+
       // 401 Unauthorized 에러 시 자동 로그아웃
       if (error.response?.status === 401) {
         // 토큰 만료 또는 유효하지 않음

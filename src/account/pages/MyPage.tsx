@@ -82,7 +82,7 @@ const MyPage: React.FC = () => {
           <h2 className="text-xl font-bold text-gray-900 mb-6">앱 정보</h2>
           <div className="space-y-3 text-sm text-gray-600">
             <p>버전: 1.0.0</p>
-            <p>My Real Pet - 반려동물 관리 서비스</p>
+            <p>MyRealPet - 반려동물 관리 서비스</p>
           </div>
         </div>
       </div>
