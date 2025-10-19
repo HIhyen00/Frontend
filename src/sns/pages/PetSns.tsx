@@ -210,7 +210,7 @@ function PetSns() {
                         {isAuthenticated && (
                             <button
                                 onClick={() => setIsCreateModalOpen(true)}
-                                className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-4 rounded-full font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all hover:scale-105"
+                                className="bg-blue-600 text-white px-6 py-3.5 rounded-2xl font-semibold hover:bg-blue-700 shadow-lg transition-all active:scale-95"
                             >
                                 게시물 작성하기
                             </button>

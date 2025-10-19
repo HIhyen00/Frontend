@@ -381,7 +381,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
             !formData.name ||
             !formData.phoneNumber
           }
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-4 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40"
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3.5 px-6 rounded-2xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg active:scale-95"
         >
           {isLoading && (
             <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>

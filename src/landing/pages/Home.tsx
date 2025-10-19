@@ -36,14 +36,14 @@ function Home() {
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                             <button
                                 onClick={() => navigate('/login')}
-                                className="bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-blue-700 transition-all inline-flex items-center gap-2 w-full sm:w-auto justify-center shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40"
+                                className="bg-blue-600 text-white px-6 py-3.5 rounded-2xl font-semibold hover:bg-blue-700 transition-all inline-flex items-center gap-2 w-full sm:w-auto justify-center shadow-lg active:scale-95"
                             >
                                 무료로 시작하기
                                 <FaArrowRight className="text-sm" />
                             </button>
                             <button
                                 onClick={() => scrollToSection('features')}
-                                className="border-2 border-gray-200 text-gray-700 px-8 py-4 rounded-xl font-semibold hover:border-gray-300 hover:bg-gray-50 transition-all w-full sm:w-auto"
+                                className="border-2 border-gray-200 text-gray-700 px-6 py-3.5 rounded-2xl font-semibold hover:border-gray-300 hover:bg-gray-50 transition-all w-full sm:w-auto active:scale-95"
                             >
                                 더 알아보기
                             </button>
@@ -212,14 +212,14 @@ function Home() {
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                             <button
                                 onClick={() => navigate('/login')}
-                                className="bg-white text-blue-700 px-8 py-4 rounded-xl font-semibold hover:bg-blue-50 transition-colors inline-flex items-center gap-2 shadow-xl"
+                                className="bg-white text-blue-700 px-6 py-3.5 rounded-2xl font-semibold hover:bg-blue-50 transition-all inline-flex items-center gap-2 shadow-lg active:scale-95"
                             >
                                 회원가입
                                 <FaArrowRight />
                             </button>
                             <button
                                 onClick={() => navigate('/sns')}
-                                className="bg-blue-500 text-white px-8 py-4 rounded-xl font-semibold hover:bg-blue-600 transition-colors inline-flex items-center gap-2"
+                                className="bg-blue-600 text-white px-6 py-3.5 rounded-2xl font-semibold hover:bg-blue-700 transition-all inline-flex items-center gap-2 shadow-lg active:scale-95"
                             >
                                 둘러보기
                                 <FaArrowRight />
